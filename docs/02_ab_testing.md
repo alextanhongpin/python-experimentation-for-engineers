@@ -275,14 +275,18 @@ Observation: the standard deviation decreases as the number of individual measur
 
 
 ```python
+def standard_error(measurements):
+    return measurements.std() / np.sqrt(len(measurements))
+```
+
+
+```python
 def aggregate_measurement_with_se(exchange, num_individual_measurements):
     individual_measurements = np.array(
         [trading_system(exchange) for _ in range(num_individual_measurements)]
     )
     aggregate_measurement = individual_measurements.mean()
-    sd_1 = individual_measurements.std()
-    se = sd_1 / np.sqrt(num_individual_measurements)
-    return aggregate_measurement, se
+    return aggregate_measurement, standard_error(individual_measurements)
 ```
 
 
@@ -323,6 +327,41 @@ z_score
 
 
 
+
+```python
+import scipy.stats as st
+
+# 95% confidence interval.
+print(st.norm.ppf(1 - 0.05))  # z-score from p-value
+print(st.norm.cdf(1.64))  # z-score to p-value
+
+# 99% confidence interval.
+print(st.norm.ppf(1 - 0.01))
+print(st.norm.cdf(2.48))
+```
+
+    1.6448536269514722
+    0.9494974165258963
+    2.3263478740408408
+    0.9934308808644532
+
+
+We know we can reject the null hypothesis is the value is below alpha of 0.05%:
+
+```python
+1 - scipy.stats.norm.cdf((x-mu)/(std/np.sqrt(n)) < alpha
+```
+Where
+- x = sample mean
+- mu = population mean
+- std = population standard deviation
+
+We can use it to solve `n`, which is the population mean:
+
+```python
+np.sqrt(n) > std * scipy.stats.norm.ppf(1 - alpha) / (x - mu)
+```
+
 ### Design the A/B test
 
 
@@ -339,7 +378,6 @@ np.random.seed(17)
 sd_1_asdaq = np.array([trading_system("ASDAQ") for _ in range(100)]).std()
 sd_1_byse = sd_1_asdaq
 sd_1_delta = np.sqrt(sd_1_asdaq**2 + sd_1_byse**2)
-
 practical_significance = 1
 ab_test_design(sd_1_delta, practical_significance)
 ```
@@ -447,6 +485,41 @@ analyze(ind_asdaq, ind_byse)
 
 
 Observation: because z is well below the threshold of -1.64, this result is statistically significant. BYSE has passed the second test.
+
+## Using scipy
+
+
+```python
+import scipy.stats as st
+from statsmodels.stats.weightstats import ztest
+
+tstat, pvalue = ztest(ind_asdaq, ind_byse)
+zscore = st.norm.ppf(pvalue)
+tstat, pvalue, zscore
+```
+
+
+
+
+    (6.202020909921336, 5.574266926940068e-10, -6.0920335108226755)
+
+
+
+
+```python
+from statsmodels.stats.power import TTestIndPower, TTestPower
+
+obj = TTestIndPower()
+n = obj.solve_power(effect_size=1, alpha=0.05, power=0.8)
+n
+```
+
+
+
+
+    16.714722572276155
+
+
 
 ### Recap of A/B test stages
 

@@ -41,7 +41,7 @@ def design_ab_test():
 
     # Calculate the number of individual measurements.
     num_ind = (2.48 * sd_1 / prac_sig) ** 2
-    return int(num_ind)
+    return int(np.ceil(num_ind))
 ```
 
 
@@ -56,7 +56,7 @@ num_ind
 
 
 
-    91561
+    91562
 
 
 
@@ -126,6 +126,7 @@ def analyze_ab_test(clicked_a, clicked_b, num_ind):
 
 ```python
 np.random.seed(17)
+
 num_ind = design_ab_test()
 clicked_a, clicked_b = run_ab_test(num_ind)
 z = analyze_ab_test(clicked_a, clicked_b, num_ind)
@@ -135,7 +136,7 @@ num_ind, z
 
 
 
-    (91561, 2.954555022088617)
+    (91562, 2.9549019707600936)
 
 
 
@@ -234,12 +235,16 @@ def epsilon_greedy(num_ind, epsilon):
 
 ```python
 ctr_vs_n, used_b = epsilon_greedy(10000, 0.1)
+print(np.sum(used_b))
 plt.plot(ctr_vs_n);
 ```
 
+    614
+
+
 
     
-![png](03_multi_armed_bandit_files/03_multi_armed_bandit_18_0.png)
+![png](03_multi_armed_bandit_files/03_multi_armed_bandit_18_1.png)
     
 
 
@@ -309,14 +314,27 @@ def epsilon_greedy_decay():
 
 ```python
 ctr_vs_n, epsilons, accept_reject = epsilon_greedy_decay()
-plt.plot(ctr_vs_n);
+print(accept_reject)
+fig, axs = plt.subplots(2, 1)
+axs[0].plot(epsilons, label="Epsilon over n")
+axs[1].plot(ctr_vs_n, label="CTR vs n", c="red")
+fig.legend();
 ```
 
+    Accept
+
+
 
     
-![png](03_multi_armed_bandit_files/03_multi_armed_bandit_20_0.png)
+![png](03_multi_armed_bandit_files/03_multi_armed_bandit_20_1.png)
     
 
+
+
+```python
+def measure_arm(i_arm):
+    return measure_click(ctr=0.005 + i_arm * 0.002)
+```
 
 
 ```python
@@ -373,38 +391,19 @@ def epsilon_greedy_decay_multi():
 
 
 ```python
+from collections import Counter
+
 ctr_vs_n, arms_selected = epsilon_greedy_decay_multi()
+print(Counter(arms_selected))
 plt.plot(ctr_vs_n);
 ```
 
-
-    
-![png](03_multi_armed_bandit_files/03_multi_armed_bandit_22_0.png)
-    
-
-
-
-```python
-def measure_arm(i_arm):
-    return measure_click(ctr=0.005 + i_arm * 0.002)
-```
-
-
-```python
-ctr_vs_n, arms_selected = epsilon_greedy_decay_multi()
-plt.plot(ctr_vs_n)
-```
-
-
-
-
-    [<matplotlib.lines.Line2D at 0x10ccf22d0>]
-
+    Counter({3: 190644, 1: 3656, 2: 2872, 0: 2828})
 
 
 
     
-![png](03_multi_armed_bandit_files/03_multi_armed_bandit_24_1.png)
+![png](03_multi_armed_bandit_files/03_multi_armed_bandit_23_1.png)
     
 
 
@@ -617,11 +616,15 @@ def thompson_sampling():
 
 ```python
 ctr_vs_n, i_best_arm = thompson_sampling()
+print(i_best_arm)
 plt.plot(ctr_vs_n);
 ```
 
+    [3]
+
+
 
     
-![png](03_multi_armed_bandit_files/03_multi_armed_bandit_45_0.png)
+![png](03_multi_armed_bandit_files/03_multi_armed_bandit_44_1.png)
     
 
