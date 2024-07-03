@@ -26,6 +26,38 @@ def markout_profit(threshold):
 
 
 ```python
+np.random.seed(17)
+([markout_profit(0.15) for _ in range(10)], [markout_profit(0.5) for _ in range(10)])
+```
+
+
+
+
+    ([-4.432990267591691,
+      1.9145236904705367,
+      3.8104683277910985,
+      0,
+      0,
+      3.475877498753951,
+      0.5427136576035457,
+      -4.010724960358923,
+      -0.6320195582677376,
+      -0.4078249827483169],
+     [2.0448324885405436,
+      0,
+      0.06889559859304795,
+      0.5325419453659244,
+      0.455015020479104,
+      -0.29962873534988227,
+      0,
+      1.7074529797072233,
+      0.4983477757546042,
+      -3.90661649896564])
+
+
+
+
+```python
 def run_experiment(num_ind, thresholds):
     individual_measurements = {threshold: [] for threshold in thresholds}
     done = set()
@@ -92,26 +124,30 @@ def boxplot(data, std_err, positions):
     ax.set_title("Box Plot with Standard Errors")
     ax.set_xlabel("threshold")
     ax.set_ylabel("markout_profit")
-
-    # Show plot
-    plt.show()
+    return ax
 
 
 # Sample data
+# For boxplot, every group should be an array of measurements,
+# that is why we reshape the 1d array of aggregate measurements.
 data = np.array(aggregate_measurements).reshape(1, -1)
 std_err = standard_errors
 positions = thresholds
-boxplot(data, std_err, positions)
+boxplot(data, std_err, positions);
 ```
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_7_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_8_0.png)
     
 
 
 
 ```python
+# The function performs a polynomial regression,
+# specifically fitting a quadratic model to the given data.
+# The returned beta array contains the coefficients of the fitted polynomial,
+# allowing you to predict y values given new x values using the model:
 def linear_regression(thresholds, aggregate_measurements):
     x = thresholds
     y = aggregate_measurements
@@ -135,6 +171,7 @@ beta
 
 
 ```python
+# Calculate the predicted y values using the beta coefficients
 def interpolate(thresholds, beta):
     xhat = np.arange(thresholds.min(), thresholds.max() + 1e-6, 0.01)
     XHat = np.array([np.ones(len(xhat)), xhat, xhat**2]).T
@@ -173,20 +210,7 @@ import numpy as np
 data = np.array(aggregate_measurements).reshape(1, -1)
 std_err = standard_errors
 
-# Create figure and axis
-fig, ax = plt.subplots()
-
-# Plot violin plot
-ax.boxplot(data, positions=thresholds)
-
-# Add standard error bars
-for i, (x, y, serr) in enumerate(zip(thresholds, aggregate_measurements, std_err)):
-    ax.errorbar(x, y, yerr=serr, fmt="o", capsize=5, ecolor="black")
-
-# Set title and labels
-ax.set_title("Box Plot with Standard Errors")
-ax.set_xlabel("threshold")
-ax.set_ylabel("markout_profit")
+ax = boxplot(data, std_err, thresholds)
 
 xhat = np.arange(thresholds.min(), thresholds.max() + 1e-6, 0.01)
 XHat = np.array([np.ones(len(xhat)), xhat, xhat**2]).T
@@ -214,7 +238,7 @@ plt.show()
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_13_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_14_0.png)
     
 
 
@@ -334,24 +358,24 @@ aggregate_measurements, standard_errors
 
 
 
-    ([0.24897158926458934,
-      0.2471849810777762,
-      0.15409356871578675,
-      0.364353742338055,
-      0.37121735405452116,
-      0.2792437553120961,
-      0.36909242986238794,
-      0.3829431544583351,
-      0.4107278813489993],
-     [0.030550297041633135,
-      0.03373418353956968,
-      0.036446385825462,
-      0.026168866415857923,
-      0.027991287030070783,
-      0.03078311703802708,
-      0.02160351382118412,
-      0.023935059014066853,
-      0.02536403334584761])
+    ([0.30501820887686837,
+      0.28691078325014896,
+      0.19626465227181056,
+      0.372181067940838,
+      0.346952909305505,
+      0.30607233748792045,
+      0.4030158914268578,
+      0.36738006900560755,
+      0.3452359914218985],
+     [0.03077800980184445,
+      0.034334278171763155,
+      0.03638664994304799,
+      0.02589157754775616,
+      0.02833935463895004,
+      0.029985599966878166,
+      0.021855672345450234,
+      0.023858778916175757,
+      0.02526222515675146])
 
 
 
@@ -364,8 +388,15 @@ boxplot(data, std_err, positions)
 ```
 
 
+
+
+    <Axes: title={'center': 'Box Plot with Standard Errors'}, xlabel='threshold', ylabel='markout_profit'>
+
+
+
+
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_21_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_22_1.png)
     
 
 
@@ -392,8 +423,8 @@ beta
 
 
 
-    array([-2.87559372, -0.14120025,  2.18103927, -0.57764293, -0.46988803,
-            0.54605389])
+    array([-0.97497231,  0.38840584,  0.83620056, -0.39089876, -0.19919833,
+            0.20389463])
 
 
 
@@ -432,7 +463,7 @@ threshold_opt, order_size_opt, estimated_max_profit
 
 
 
-    (1.2500000000000004, 3.0499999999999936, 0.4082056915720207)
+    (1.2100000000000004, 2.75, 0.39425743094342747)
 
 
 
@@ -471,7 +502,7 @@ plt.show()
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_29_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_30_0.png)
     
 
 
@@ -484,8 +515,15 @@ boxplot(data, std_err, positions)
 ```
 
 
+
+
+    <Axes: title={'center': 'Box Plot with Standard Errors'}, xlabel='threshold', ylabel='markout_profit'>
+
+
+
+
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_30_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_31_1.png)
     
 
 
@@ -500,7 +538,7 @@ aggregate_measurements, standard_error
 
 
 
-    ([0.35282741607659324], [0.023736160734659388])
+    ([0.36638808798987776], [0.02212615846153084])
 
 
 
@@ -515,11 +553,6 @@ aggregate_measurements, standard_error
 
 
 
-    (0.11090884245968473, 0.20585348539832227)
+    (0.11412884700594182, 0.20263348085206517)
 
 
-
-
-```python
-
-```
