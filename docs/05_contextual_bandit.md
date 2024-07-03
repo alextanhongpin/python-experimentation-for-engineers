@@ -353,5 +353,250 @@ plt.ylabel("mean viewing time");
 
 
 ```python
+class RecommenderThompsonSampling:
+    def __init__(self, num_features, num_actions, num_bs_samples):
+        self._num_features = num_features
+        self._num_actions = num_actions
+        self._num_bs_samples = num_bs_samples
 
+    def reset(self):
+        self._betas = []
+        for _ in range(self._num_actions):
+            self._betas.append(
+                [
+                    np.random.normal(size=(num_features,))
+                    for _ in range(self._num_actions)
+                ]
+            )
+
+    def _bs_sample(self, samples_y, samples_x):
+        bs_samples_y = []
+        bs_samples_x = []
+        for action in range(self._num_actions):
+            y = np.array(samples_y[action])
+            x = np.array(samples_x[action])
+            if len(y) > 0:
+                i = np.random.randint(0, len(y), size=(len(y),))
+                y = y[i]
+                x = x[i, :]
+            bs_samples_y.append(y)
+            bs_samples_x.append(x)
+
+        return bs_samples_y, bs_samples_x
+
+    def fit_offline(self, logs):
+        fit_logs = logs
+        samples_y, samples_x = collect_logs_by_action(num_actions, fit_logs)
+        self._betas = []
+        for _ in range(self._num_bs_samples):
+            bs_samples_y, bs_samples_x = self._bs_sample(samples_y, samples_x)
+            self._betas.append(
+                build_models(self._num_features, bs_samples_y, bs_samples_x)
+            )
+
+    def policy(self, context):
+        # Randomly choose one model from the ensemble.
+        i_beta = np.random.randint(0, len(self._betas))
+        beta = self._betas[i_beta]
+        viewing_max = -np.inf
+        for action in range(self._num_actions):
+            viewing_hat = context @ beta[action]
+            if viewing_hat > viewing_max:
+                action_best = action
+                viewing_max = viewing_hat
+        return action_best
 ```
+
+
+```python
+np.random.seed(17)
+visits = np.array([3 + int(5 * np.random.uniform()) for _ in range(100)])
+i = np.random.randint(
+    len(visits),
+    size=(
+        len(
+            visits,
+        )
+    ),
+)
+bs_visits = visits[i]
+print(visits.mean(), visits.std())
+print(bs_visits.mean(), bs_visits.std())
+```
+
+    5.01 1.4525494828060075
+    4.95 1.49248115565993
+
+
+
+```python
+def aspect_square(ax):
+    c = ax.axis()
+    ax.set_aspect((c[1] - c[0]) / (c[3] - c[2]))
+
+
+fig, (ax1, ax2) = plt.subplots(1, 2)
+
+ax1.hist(visits, 25)
+aspect_square(ax1)
+ax1.set_title("Measured sample set")
+
+ax2.hist(bs_visits, 25)
+aspect_square(ax2)
+ax2.set_title("Bootstrap sample set");
+```
+
+
+    
+![png](05_contextual_bandit_files/05_contextual_bandit_20_0.png)
+    
+
+
+
+```python
+np.random.seed(17)
+recommender = RecommenderThompsonSampling(num_features, num_actions, num_bs_samples=30)
+mean_ts, se_ts = run_sequences(action_weights, num_actions, recommender)
+```
+
+
+```python
+plt.plot(mean, ".-")
+plt.plot(mean_eps, ".--")
+plt.plot(mean_ts, ":.")
+
+plt.fill_between(
+    np.arange(len(mean)),
+    mean - se,
+    mean + se,
+    alpha=0.333,
+    linewidth=1,
+)
+
+plt.fill_between(
+    np.arange(len(mean_eps)),
+    mean_eps - se_eps,
+    mean_eps + se_eps,
+    alpha=0.333,
+    linewidth=1,
+)
+
+plt.fill_between(
+    np.arange(len(mean_eps)),
+    mean_ts - se_ts,
+    mean_ts + se_ts,
+    alpha=0.333,
+    linewidth=1,
+)
+
+plt.xlabel("day")
+plt.ylabel("mean viewing time")
+plt.legend(
+    ["RecommenderGreedy", "RecommenderEpsilonGreedy", "RecommenderThompsonSampling"]
+);
+```
+
+
+    
+![png](05_contextual_bandit_files/05_contextual_bandit_22_0.png)
+    
+
+
+## Randomized probability sampling
+
+
+```python
+class RecommenderThompsonSamplingInstrumented:
+    def __init__(self, num_features, num_actions, num_bs_samples):
+        self._num_features = num_features
+        self._num_actions = num_actions
+        self._num_bs_samples = num_bs_samples
+
+    def reset(self):
+        self._betas = []
+        for _ in range(self._num_bs_samples):
+            self._betas.append(
+                [
+                    np.random.normal(size=(num_features,))
+                    for _ in range(self._num_actions)
+                ]
+            )
+        self._p_best = []
+        self.mean_vs_day = []
+
+    def _bs_sample(self, samples_y, samples_x):
+        bs_samples_y = []
+        bs_samples_x = []
+        for action in range(self._num_actions):
+            y = np.array(samples_y[action])
+            x = np.array(samples_x[action])
+            if len(y) > 0:
+                i = np.random.randint(0, len(y), size=(len(y),))
+                y = y[i]
+                x = x[i, :]
+            bs_samples_y.append(y)
+            bs_samples_x.append(x)
+        return bs_samples_y, bs_samples_x
+
+    def fit_offline(self, logs):
+        self.mean_vs_day.append(np.array(self._p_best).mean())
+
+        fit_logs = logs
+        samples_y, samples_x = collect_logs_by_action(num_actions, fit_logs)
+        self._betas = []
+        for _ in range(self._num_bs_samples):
+            bs_samples_y, bs_samples_x = self._bs_sample(samples_y, samples_x)
+            self._betas.append(
+                build_models(self._num_features, bs_samples_y, bs_samples_x)
+            )
+
+    def _best_post(self, context, beta):
+        viewing_max = -np.inf
+        for action in range(self._num_actions):
+            viewing_hat = context @ beta[action]
+            if viewing_hat > viewing_max:
+                action_best = action
+                viewing_max = viewing_hat
+        return action_best
+
+    def policy(self, context):
+        best_posts = [
+            self._best_post(context, self._betas[i_beta])
+            for i_beta in range(self._num_bs_samples)
+        ]
+
+        i_beta = np.random.randint(self._num_bs_samples)
+        action_best = best_posts[i_beta]
+        num = 0
+        for bp in best_posts:
+            if bp == action_best:
+                num += 1
+
+        p_post = num / self._num_bs_samples
+        self._p_best.append(p_post)
+        return action_best
+```
+
+
+```python
+np.random.seed(17)
+recommender = RecommenderThompsonSamplingInstrumented(
+    num_features, num_actions, num_bs_samples=30
+)
+run_sequences(action_weights, num_actions, recommender);
+```
+
+
+```python
+m = np.array(recommender.mean_vs_day)
+plt.plot(m, ".--")
+
+plt.xlabel("day")
+plt.ylabel("avg. $p_{best}(action)$");
+```
+
+
+    
+![png](05_contextual_bandit_files/05_contextual_bandit_26_0.png)
+    
+
