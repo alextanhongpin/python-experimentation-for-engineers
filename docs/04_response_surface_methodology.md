@@ -171,6 +171,26 @@ beta
 
 
 ```python
+# Alternative approach using np.linalg.solve, which may be better than doing the np.linalg.inv
+def solve(thresholds, aggregate_measurements):
+    x = thresholds
+    y = aggregate_measurements
+    X = np.array([np.ones(len(y)), x, x**2]).T
+    return np.linalg.solve(X, y)
+
+
+solve(thresholds, aggregate_measurements)
+```
+
+
+
+
+    array([-0.08091673,  0.46556864, -0.21353049])
+
+
+
+
+```python
 # Calculate the predicted y values using the beta coefficients
 def interpolate(thresholds, beta):
     xhat = np.arange(thresholds.min(), thresholds.max() + 1e-6, 0.01)
@@ -238,7 +258,7 @@ plt.show()
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_14_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_15_0.png)
     
 
 
@@ -358,24 +378,24 @@ aggregate_measurements, standard_errors
 
 
 
-    ([0.30501820887686837,
-      0.28691078325014896,
-      0.19626465227181056,
-      0.372181067940838,
-      0.346952909305505,
-      0.30607233748792045,
-      0.4030158914268578,
-      0.36738006900560755,
-      0.3452359914218985],
-     [0.03077800980184445,
-      0.034334278171763155,
-      0.03638664994304799,
-      0.02589157754775616,
-      0.02833935463895004,
-      0.029985599966878166,
-      0.021855672345450234,
-      0.023858778916175757,
-      0.02526222515675146])
+    ([0.2646522965756872,
+      0.2454920045765666,
+      0.19432013312827526,
+      0.3761781365054332,
+      0.31039511099010236,
+      0.34940454762815315,
+      0.3738789707238803,
+      0.40564396103898587,
+      0.37488031410441824],
+     [0.030713502374250433,
+      0.03417908366197812,
+      0.036595002156779646,
+      0.026212905949839858,
+      0.028165337042961168,
+      0.03051688662644697,
+      0.021489191388520408,
+      0.02341628044405465,
+      0.0259962939157378])
 
 
 
@@ -396,7 +416,7 @@ boxplot(data, std_err, positions)
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_22_1.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_23_1.png)
     
 
 
@@ -423,8 +443,8 @@ beta
 
 
 
-    array([-0.97497231,  0.38840584,  0.83620056, -0.39089876, -0.19919833,
-            0.20389463])
+    array([ 0.77025795,  0.58042598, -0.51343956, -0.56823443,  0.02733932,
+            0.28533403])
 
 
 
@@ -463,7 +483,7 @@ threshold_opt, order_size_opt, estimated_max_profit
 
 
 
-    (1.2100000000000004, 2.75, 0.39425743094342747)
+    (1.2500000000000004, 3.2499999999999893, 0.3871866263670021)
 
 
 
@@ -502,7 +522,7 @@ plt.show()
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_30_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_31_0.png)
     
 
 
@@ -523,7 +543,7 @@ boxplot(data, std_err, positions)
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_31_1.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_32_1.png)
     
 
 
@@ -538,7 +558,7 @@ aggregate_measurements, standard_error
 
 
 
-    ([0.36638808798987776], [0.02212615846153084])
+    ([0.3445779268266859], [0.02499982727088869])
 
 
 
@@ -553,6 +573,6 @@ aggregate_measurements, standard_error
 
 
 
-    (0.11412884700594182, 0.20263348085206517)
+    (0.10838150938722613, 0.20838081847078088)
 
 
