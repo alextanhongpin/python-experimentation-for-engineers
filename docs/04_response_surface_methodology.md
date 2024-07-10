@@ -144,6 +144,41 @@ boxplot(data, std_err, positions);
 
 
 ```python
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
+
+pipe = make_pipeline(
+    PolynomialFeatures(2, include_bias=False),
+    LinearRegression(),
+)
+X = np.array(thresholds).reshape(-1, 1)
+y = aggregate_measurements
+pipe.fit(X, y)
+
+xhat = np.arange(thresholds.min(), thresholds.max() + 1e-6, 0.01)
+yhat = pipe.predict(xhat.reshape(-1, 1))
+
+
+i = np.where(yhat == yhat.max())[0][0]
+max_x = xhat[i]
+max_y = yhat[i]
+print(max_x, max_y)
+plt.scatter(max_x, max_y, color="red", marker="o")
+plt.plot(xhat, yhat);
+```
+
+    1.0900000000000005 0.1728575136117882
+
+
+
+    
+![png](04_response_surface_methodology_files/04_response_surface_methodology_9_1.png)
+    
+
+
+
+```python
 # The function performs a polynomial regression,
 # specifically fitting a quadratic model to the given data.
 # The returned beta array contains the coefficients of the fitted polynomial,
@@ -258,7 +293,7 @@ plt.show()
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_15_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_16_0.png)
     
 
 
@@ -378,24 +413,24 @@ aggregate_measurements, standard_errors
 
 
 
-    ([0.2646522965756872,
-      0.2454920045765666,
-      0.19432013312827526,
-      0.3761781365054332,
-      0.31039511099010236,
-      0.34940454762815315,
-      0.3738789707238803,
-      0.40564396103898587,
-      0.37488031410441824],
-     [0.030713502374250433,
-      0.03417908366197812,
-      0.036595002156779646,
-      0.026212905949839858,
-      0.028165337042961168,
-      0.03051688662644697,
-      0.021489191388520408,
-      0.02341628044405465,
-      0.0259962939157378])
+    ([0.2780161489823486,
+      0.28567968099920193,
+      0.1630533190041552,
+      0.37815280319145056,
+      0.3560170218872184,
+      0.3069667277397316,
+      0.3646509773699763,
+      0.3608276233081571,
+      0.32769705694567547],
+     [0.03131050860906684,
+      0.03363447075101623,
+      0.036455853681681895,
+      0.02612455618771927,
+      0.028482827101512495,
+      0.030512985917059317,
+      0.021578525963478735,
+      0.023575387476880764,
+      0.02501165364269025])
 
 
 
@@ -416,7 +451,7 @@ boxplot(data, std_err, positions)
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_23_1.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_24_1.png)
     
 
 
@@ -443,8 +478,8 @@ beta
 
 
 
-    array([ 0.77025795,  0.58042598, -0.51343956, -0.56823443,  0.02733932,
-            0.28533403])
+    array([-3.75007707,  0.89403502,  2.52341505, -0.80626213, -0.49736432,
+            0.31203564])
 
 
 
@@ -483,7 +518,7 @@ threshold_opt, order_size_opt, estimated_max_profit
 
 
 
-    (1.2500000000000004, 3.2499999999999893, 0.3871866263670021)
+    (1.1100000000000003, 2.8799999999999972, 0.3885185124964221)
 
 
 
@@ -522,7 +557,7 @@ plt.show()
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_31_0.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_32_0.png)
     
 
 
@@ -543,7 +578,7 @@ boxplot(data, std_err, positions)
 
 
     
-![png](04_response_surface_methodology_files/04_response_surface_methodology_32_1.png)
+![png](04_response_surface_methodology_files/04_response_surface_methodology_33_1.png)
     
 
 
@@ -558,7 +593,7 @@ aggregate_measurements, standard_error
 
 
 
-    ([0.3445779268266859], [0.02499982727088869])
+    ([0.3884899982416973], [0.025122742371065137])
 
 
 
@@ -573,6 +608,6 @@ aggregate_measurements, standard_error
 
 
 
-    (0.10838150938722613, 0.20838081847078088)
+    (0.10813567918687322, 0.20862664867113379)
 
 
