@@ -28,7 +28,7 @@ convert_all:
 
 # Similar to convert, but only convert the diff files.
 convert:
-	@poetry run jupyter nbconvert --to markdown --output-dir=docs $(shell git diff HEAD --name-only | grep .ipynb)
+	poetry run jupyter nbconvert --to markdown --output-dir=docs $(shell git diff HEAD --name-only | grep .ipynb)
 
 
 format:
