@@ -331,19 +331,50 @@ z_score
 ```python
 import scipy.stats as st
 
+# 90% confidence interval.
+print(st.norm.ppf(1 - 0.1))  # z-score from p-value
+print(st.norm.cdf(1.64))  # z-score to p-value
+print(
+    st.norm.sf(abs(1.64)), st.norm.sf(abs(1.64)) * 2
+)  # z-score to p-value, sf: survival function is 1-cdf
+print()
+
 # 95% confidence interval.
 print(st.norm.ppf(1 - 0.05))  # z-score from p-value
-print(st.norm.cdf(1.64))  # z-score to p-value
+print(st.norm.cdf(1.96))  # z-score to p-value
+print(st.norm.sf(abs(1.96)) * 2)  # z-score to p-value
+print()
 
 # 99% confidence interval.
 print(st.norm.ppf(1 - 0.01))
-print(st.norm.cdf(2.48))
+print(st.norm.cdf(2.576))
+print(st.norm.sf(abs(2.576)) * 2)  # z-score to p-value
 ```
 
-    1.6448536269514722
+    1.2815515655446004
     0.9494974165258963
+    0.050502583474103704 0.10100516694820741
+    
+    1.644853626951472
+    0.9750021048517795
+    0.04999579029644087
+    
     2.3263478740408408
-    0.9934308808644532
+    0.995002467684265
+    0.009995064631470029
+
+
+
+```python
+for z_score in [1, 1.96, 2.48, 5.0]:
+    p_value = st.norm.sf(abs(z_score)) * 2  # two-tailed test
+    print(p_value)
+```
+
+    0.31731050786291415
+    0.04999579029644087
+    0.013138238271093524
+    5.733031437583869e-07
 
 
 We know we can reject the null hypothesis is the value is below alpha of 0.05%:
@@ -484,6 +515,69 @@ analyze(ind_asdaq, ind_byse)
 
 
 
+
+```python
+def z_score(dist1, dist2):
+    assert isinstance(dist1, np.ndarray), "dist1 is not np.ndarray"
+    assert isinstance(dist2, np.ndarray), "dist2 is not np.ndarray"
+
+    num = dist2.mean() - dist1.mean()
+    den = np.sqrt((dist1.std() ** 2) / len(dist1) + (dist2.std() ** 2) / len(dist2))
+    return num / den
+```
+
+
+```python
+z_score(ind_asdaq, ind_byse)
+```
+
+
+
+
+    -6.3539952379665925
+
+
+
+
+```python
+p_value = st.norm.sf(abs(z_score(ind_asdaq, ind_byse)))
+p_value, p_value < 0.05
+```
+
+
+
+
+    (1.0489666592722232e-10, True)
+
+
+
+
+```python
+# Two tail p-value
+p_value = p_value * 2
+p_value, p_value < 0.05
+```
+
+
+
+
+    (2.0979333185444464e-10, True)
+
+
+
+
+```python
+a = np.array([1, 2, 3])
+isinstance(a, np.ndarray)
+```
+
+
+
+
+    True
+
+
+
 Observation: because z is well below the threshold of -1.64, this result is statistically significant. BYSE has passed the second test.
 
 ## Using scipy
@@ -517,7 +611,7 @@ n
 
 
 
-    16.714722572276155
+    16.714722572276173
 
 
 

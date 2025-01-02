@@ -8,7 +8,7 @@
 include .env
 export
 
-jupyter: kernel
+jupyter: 
 	@poetry run jupyter-lab
 
 kernel:

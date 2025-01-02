@@ -72,6 +72,35 @@ z
 
 
 
+
+```python
+from scipy.stats import norm
+
+# Multiply by 2 for two-tailed tests
+p = norm.sf(abs(1.96)) * 2
+p, p < 0.05
+```
+
+
+
+
+    (0.04999579029644087, True)
+
+
+
+
+```python
+p = norm.sf(abs(1.25)) * 2
+p, p < 0.05
+```
+
+
+
+
+    (0.2112995473337107, False)
+
+
+
 ## Plotting the Standard Normal Distribution (SND)
 
 
@@ -85,6 +114,7 @@ std_lim = 1.96  # 95% Confidence Interval (CI)
 # Plot between -10 and 10 with 0.1 steps
 X = np.arange(-std_lim * 3, std_lim * 3, 0.1)
 ax = subplots()[1]
+ax.set_title("two-tailed test")
 
 # Mean and std of any SND is always 0 and 1 respectively.
 mean = 0
@@ -96,25 +126,100 @@ lo = mean - std_lim * std
 hi = mean + std_lim * std
 
 # ax.fill_between(X, pdf, where=(X > lo) & (X < hi))
-ax.fill_between(X, pdf, where=(X <= norm.ppf(0.95)) & (X >= norm.ppf(0.05)))
+ax.fill_between(X, pdf, where=(X <= norm.ppf(0.975)) & (X >= norm.ppf(0.025)))
 ax.text(lo, 0, lo, ha="center")
 ax.text(hi, 0, hi, ha="center")
 
 
-ax.text(2.5, 0.15, "area = 0.05")
-ax.text(-1, 0.13, "area = 0.9 = 90%")
+ax.text(2.5, 0.15, "area = 0.025")
+ax.text(-1, 0.13, "area = 0.95 = 95%")
+ax.text(-4, 0.15, "area = 0.025");
+```
+
+
+    
+![png](02_ab_test_summary_files/02_ab_test_summary_7_0.png)
+    
+
+
+
+```python
+norm.cdf(-1.96), norm.cdf(1.96)
+```
+
+
+
+
+    (0.024997895148220435, 0.9750021048517795)
+
+
+
+
+```python
+norm.ppf(0.025), norm.ppf(0.975)
+```
+
+
+
+
+    (-1.9599639845400545, 1.959963984540054)
+
+
+
+
+```python
+norm.sf(abs(-1.96)) * 2  # For two-tailed test
+```
+
+
+
+
+    0.04999579029644087
+
+
+
+
+```python
+import numpy as np
+from matplotlib.pyplot import subplots
+from scipy.stats import norm
+
+std_lim = 1.645  # 90% Confidence Interval (CI)
+
+# Plot between -10 and 10 with 0.1 steps
+X = np.arange(-std_lim * 3, std_lim * 3, 0.1)
+ax = subplots()[1]
+ax.set_title("one-tailed test")
+
+# Mean and std of any SND is always 0 and 1 respectively.
+mean = 0
+std = 1
+pdf = norm.pdf(X, mean, std)
+ax.plot(X, pdf)
+
+lo = mean - std_lim * std
+hi = mean + std_lim * std
+
+# ax.fill_between(X, pdf, where=(X > lo) & (X < hi))
+ax.fill_between(X, pdf, where=(X < norm.ppf(0.05)))
+ax.text(lo, 0, lo, ha="center")
+
+
+ax.text(-1, 0.13, "area = 0.95 = 95%")
 ax.text(-4, 0.15, "area = 0.05");
 ```
 
 
     
-![png](02_ab_test_summary_files/02_ab_test_summary_5_0.png)
+![png](02_ab_test_summary_files/02_ab_test_summary_11_0.png)
     
 
 
 Observation:
 - the probability of randomly selecting a score between -1.96 and +1.96 standard deviations from the mean is 95%.
 - if there is less than a 5% chance of a raw score being selected randomly, then this is a statistically significant result
+
+the two-tailed test shows evidence that the control and variation are different, but the one-tailed test shows evidence if variation is better than the control.
 
 According to a unit normal table, the values for a z-score of 1.64 are 0.9495, 0.0505, and 0.4495. The values for a z-score of 2.48 are 0.9934, 0.0066, and 0.4934. 
 
@@ -127,7 +232,7 @@ ax.hist(vals, bins=200, density=True);
 
 
     
-![png](02_ab_test_summary_files/02_ab_test_summary_8_0.png)
+![png](02_ab_test_summary_files/02_ab_test_summary_15_0.png)
     
 
 
@@ -144,7 +249,7 @@ st.norm.cdf(-1.741)
 
 
 
-    0.04084178926110883
+    0.04084178926110882
 
 
 
@@ -156,7 +261,7 @@ st.norm.cdf(-1.64)
 
 
 
-    0.05050258347410371
+    0.050502583474103704
 
 
 
@@ -169,7 +274,7 @@ st.norm.cdf(-1.64)
 
 
 
-    [0.0013498980316300933,
+    [0.001349898031630093,
      0.15865525393145707,
      0.5,
      0.8413447460685429,
@@ -190,7 +295,7 @@ st.norm.ppf(0.97)
 
 
 
-    1.8807936081512509
+    1.8807936081512506
 
 
 
@@ -202,7 +307,7 @@ st.norm.ppf(0.05), st.norm.ppf(0.95)
 
 
 
-    (-1.6448536269514729, 1.6448536269514722)
+    (-1.6448536269514729, 1.644853626951472)
 
 
 
@@ -214,10 +319,7 @@ st.norm.ppf(0.05), st.norm.ppf(0.95)
 
 
 
-    [1.6448536269514722,
-     1.8807936081512509,
-     2.0537489106318225,
-     2.3263478740408408]
+    [1.644853626951472, 1.8807936081512506, 2.0537489106318225, 2.3263478740408408]
 
 
 
@@ -317,16 +419,6 @@ n
 
 
 
-    16.714722572276155
+    16.714722572276173
 
 
-
-
-```python
-
-```
-
-
-```python
-
-```
