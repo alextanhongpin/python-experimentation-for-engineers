@@ -1,3 +1,34 @@
+To calculate a z-score, you can use the formula:
+
+\[ z = \frac{(X - \mu)}{\sigma} \]
+
+where:
+- \( X \) is the value you want to standardize.
+- \( \mu \) is the mean of the dataset.
+- \( \sigma \) is the standard deviation of the dataset.
+
+Here's an example in Python:
+
+```python
+import numpy as np
+
+# Example data
+data = np.array([10, 20, 30, 40, 50])
+
+# Calculate mean and standard deviation
+mean = np.mean(data)
+std_dev = np.std(data)
+
+# Calculate z-scores
+z_scores = (data - mean) / std_dev
+
+print("Mean:", mean)
+print("Standard Deviation:", std_dev)
+print("Z-scores:", z_scores)
+```
+
+This code calculates the mean and standard deviation of the `data` array, then computes the z-scores for each element in the array.
+
 To use z-scores to compare two distributions and test a null hypothesis, you typically follow these steps:
 
 1. **Calculate the means and standard deviations** of the two distributions.
