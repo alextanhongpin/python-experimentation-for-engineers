@@ -376,109 +376,12 @@ one_tail, two_tail
 
 
 
-## Power analysis
-
-
-```python
-import math
-
-from statsmodels.stats.power import TTestIndPower
-
-# calculation of effect size
-# size of samples in pilot study
-n1, n2 = 40, 4
-
-# variance of samples in pilot study
-s1, s2 = 5**2, 5**2
-
-# calculate the pooled standard deviation
-# (Cohen's d)
-s = math.sqrt(((n1 - 1) * s1 + (n2 - 1) * s2) / (n1 + n2 - 2))
-
-# means of the samples
-u1, u2 = 90, 85
-
-# calculate the effect size
-d = (u1 - u2) / s
-print(f"Effect size: {d}")
-
-# factors for power analysis
-alpha = 0.05
-power = 0.8
-
-# perform power analysis to find sample size
-# for given effect
-obj = TTestIndPower()
-n = obj.solve_power(
-    effect_size=d, alpha=alpha, power=power, ratio=1, alternative="two-sided"
-)
-
-print("Sample size/Number needed in each group: {:.3f}".format(math.ceil(n)))
-```
-
-    Effect size: 1.0
-    Sample size/Number needed in each group: 17.000
-
-
-
-```python
-def sample_size(a, b):
-    from statsmodels.stats.power import TTestIndPower, TTestPower
-
-    # calculation of effect size
-    # size of samples in pilot study
-    n1, n2 = len(a), len(b)
-
-    # variance of samples in pilot study
-    s1, s2 = a.var(), b.var()
-
-    # calculate the pooled standard deviation
-    # (Cohen's d)
-    s = math.sqrt(((n1 - 1) * s1 + (n2 - 1) * s2) / (n1 + n2 - 2))
-
-    # means of the samples
-    u1, u2 = a.mean(), b.mean()
-
-    # calculate the effect size
-    d = (u1 - u2) / s
-    print(f"Effect size: {d}")
-
-    # factors for power analysis
-    alpha = 0.05
-    power = 0.8
-
-    # perform power analysis to find sample size
-    # for given effect
-    obj = TTestIndPower()
-    n = obj.solve_power(
-        effect_size=d, alpha=alpha, power=power, ratio=1, alternative="two-sided"
-    )
-    n = int(math.ceil(n))
-    print("Sample size/Number needed in each group: {:.3f}".format(n))
-    return n
-```
-
-Finding sample size with estimate effect size (when the variance is unknown)
-
-
-```python
-from statsmodels.stats.power import TTestIndPower, TTestPower
-
-obj = TTestIndPower()
-n = obj.solve_power(effect_size=1, alpha=0.05, power=0.8)
-n
-```
-
-
-
-
-    16.714722572276173
-
-
+## Performing the Z-test
 
 
 ```python
 import statsmodels
+import statsmodels.api as sm
 
 print(statsmodels.__version__)
 ```
@@ -488,64 +391,36 @@ print(statsmodels.__version__)
 
 
 ```python
-def is_significant(n_obs1, mean1, n_obs2, mean2):
+def calculate_pvalue(n_obs1, mean1, n_obs2, mean2):
+    """This is similar to how abtest calculates it"""
     std_err1 = np.sqrt(mean1 * (1 - mean1) / n_obs1)
     std_err2 = np.sqrt(mean2 * (1 - mean2) / n_obs2)
     std_err_delta = np.sqrt(std_err1**2 + std_err2**2)
     z_score = (mean2 - mean1) / std_err_delta
     p = norm.sf(abs(z_score))
     # uplift = (mean2 - mean1) / mean1
-    print(p)
-    return p < 0.05
+    return p
 
 
-is_significant(80000, 1600 / 80000, 80000, 1696 / 80000)
-```
-
-    0.04554571556583972
-
-
-
-
-
-    True
-
-
-
-The sample size calculated below is similar to the ones in [abtestguide](https://abtestguide.com/abtestsize/)
-
-
-```python
-import statsmodels.stats.proportion as smprop
-
-expected_improvement = 0.15  # 15%
-p1 = 0.02
-p2 = (1 + expected_improvement) * p1
-one_sided = smprop.samplesize_proportions_2indep_onetail(
-    p2 - p1, p1, 0.8, alternative="larger"
-)
-two_sided = smprop.samplesize_proportions_2indep_onetail(
-    p2 - p1, p1, 0.8, alternative="two-sided"
-)
-
-round(one_sided), round(two_sided)
+pval = calculate_pvalue(80000, 1600 / 80000, 80000, 1696 / 80000)
+pval, pval < 0.05
 ```
 
 
 
 
-    (28903, 36693)
+    (0.04554571556583972, True)
 
 
 
-## Performing the Z-test
+Below we use statsmodel to achieve similar result
 
 
 ```python
 # To check statistical significance
-count = [1600, 1696]
+count = [1600, 1696]  # smaller: p1 < p2
 nobs = [80000, 80000]
-stat, pval = statsmodels.stats.proportion.proportions_ztest(
+stat, pval = sm.stats.proportions_ztest(
     count, nobs, alternative="smaller", prop_var=False
 )
 stat, pval, pval < 0.05
@@ -560,33 +435,120 @@ stat, pval, pval < 0.05
 
 ## Sample Size Calculation
 
+The sample size calculated below is similar to the ones in [abtestguide](https://abtestguide.com/abtestsize/)
 
 
 ```python
-import statsmodels.api as sm
-
-init_prop = 0.02 * 1.15
-mde_prop = 0.02
-effect_size = sm.stats.proportion_effectsize(init_prop, mde_prop)
-print(
-    f"For a change from {init_prop:.2f} to {mde_prop:.2f} - the effect size is {effect_size:.2f}."
+expected_improvement = 0.15  # 15%
+p1 = 0.02
+p2 = (1 + expected_improvement) * p1
+one_sided = sm.stats.samplesize_proportions_2indep_onetail(
+    p2 - p1, p1, 0.8, alternative="larger"
 )
+two_sided = sm.stats.samplesize_proportions_2indep_onetail(
+    p2 - p1, p1, 0.8, alternative="two-sided"
+)
+
+round(one_sided), round(two_sided)
 ```
 
-    For a change from 0.02 to 0.02 - the effect size is 0.02.
 
+
+
+    (28903, 36693)
+
+
+
+I couldn't find the equivalent when using statsmodel
 
 
 ```python
 from math import ceil
 
+import statsmodels.api as sm
+
+init_prop = 0.02
+mde_prop = 0.02 * 1.15
+effect_size = sm.stats.proportion_effectsize(init_prop, mde_prop)
+print(
+    f"For a change from {init_prop:.2f} to {mde_prop:.2f} - the effect size is {effect_size:.4f}."
+)
+
+
 sample_size = sm.stats.zt_ind_solve_power(
-    effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="larger"
+    effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="two-sided"
 )
 print(
     f"{ceil(sample_size)} sample size required given power analysis and input parameters."
 )
 ```
 
-    28870 sample size required given power analysis and input parameters.
+    For a change from 0.02 to 0.02 - the effect size is -0.0207.
+    36650 sample size required given power analysis and input parameters.
+
+
+
+```python
+def calculate_effect_size(baseline_rate, expected_rate):
+    # Calculate standard deviations for both rate based on Bernoulli distribution.
+    # https://math.stackexchange.com/questions/1716156/sd-of-a-bernoulli-trial
+    std_base = np.sqrt(baseline_rate * (1 - baseline_rate))
+    std_exp = np.sqrt(expected_rate * (1 - expected_rate))
+
+    # Calculate the pooled standard deviation.
+    pooled_std = np.sqrt((std_base**2 + std_exp**2) / 2)
+
+    # Calculate the effect size.
+    effect_size = (expected_rate - baseline_rate) / pooled_std
+    return effect_size
+
+
+effect_size = calculate_effect_size(0.02, 0.02 * 1.15)
+sample_size = sm.stats.zt_ind_solve_power(
+    effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="two-sided"
+)
+print(
+    f"{ceil(sample_size)} sample size required given power analysis and input parameters."
+)
+```
+
+    36690 sample size required given power analysis and input parameters.
+
+
+
+```python
+es = sm.stats.proportion_effectsize(0.02, 0.023)
+m = sm.stats.tt_ind_solve_power(
+    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+)
+n = sm.stats.tt_ind_solve_power(
+    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
+)
+m, n
+```
+
+
+
+
+    (36650.74612637405, 28869.758338145828)
+
+
+
+
+```python
+es = sm.stats.proportion_effectsize(0.02, 0.023)
+m = sm.stats.zt_ind_solve_power(
+    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+)
+n = sm.stats.zt_ind_solve_power(
+    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
+)
+m, n
+```
+
+
+
+
+    (36649.785198663005, 28869.081600694815)
+
 
