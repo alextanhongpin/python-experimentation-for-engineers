@@ -1,3 +1,9 @@
+# Z-score
+
+- https://stackoverflow.com/questions/20864847/probability-to-z-score-and-vice-versa
+- https://open.maricopa.edu/psy230mm/chapter/chapter-1-z-test-hypothesis-testing/
+- https://www.ncl.ac.uk/webtemplate/ask-assets/external/maths-resources/statistics/hypothesis-testing/one-tailed-and-two-tailed-tests.html
+
 To calculate a z-score, you can use the formula:
 
 $\[ z = \frac{(X - \mu)}{\sigma} \]$
