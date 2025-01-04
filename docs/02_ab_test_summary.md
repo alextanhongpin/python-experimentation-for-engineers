@@ -108,6 +108,18 @@ num_side = 2
 lower = norm.ppf(alpha / num_side)
 upper = norm.ppf(1 - alpha / num_side)
 
+print("alpha: {}".format(alpha))
+print(
+    "p_val|z_score\n{}|{:+.2f}\n{}|{:+.2f}".format(
+        alpha / num_side, lower, 1 - alpha / num_side, upper
+    )
+)
+print()
+alpha = 0.01
+lower = norm.ppf(alpha / num_side)
+upper = norm.ppf(1 - alpha / num_side)
+
+print("alpha: {}".format(alpha))
 print(
     "p_val|z_score\n{}|{:+.2f}\n{}|{:+.2f}".format(
         alpha / num_side, lower, 1 - alpha / num_side, upper
@@ -115,9 +127,15 @@ print(
 )
 ```
 
+    alpha: 0.05
     p_val|z_score
     0.025|-1.96
     0.975|+1.96
+    
+    alpha: 0.01
+    p_val|z_score
+    0.005|-2.58
+    0.995|+2.58
 
 
 
@@ -241,6 +259,20 @@ num_side = 1
 lower = norm.ppf(alpha / num_side)  # norm.ppf(0.05)
 upper = norm.ppf(1 - alpha / num_side)  # norm.ppf(0.95)
 
+print('alpha: {}'.format(alpha))
+print(
+    "p_val|z_score\n{}|{:+.3f}\n{}|{:+.3f}".format(
+        alpha / num_side, lower, 1 - alpha / num_side, upper
+    )
+)
+print()
+
+alpha = 0.01
+
+lower = norm.ppf(alpha / num_side)  # norm.ppf(0.05)
+upper = norm.ppf(1 - alpha / num_side)  # norm.ppf(0.95)
+
+print('alpha: {}'.format(alpha))
 print(
     "p_val|z_score\n{}|{:+.3f}\n{}|{:+.3f}".format(
         alpha / num_side, lower, 1 - alpha / num_side, upper
@@ -248,9 +280,15 @@ print(
 )
 ```
 
+    alpha: 0.05
     p_val|z_score
     0.05|-1.645
     0.95|+1.645
+    
+    alpha: 0.01
+    p_val|z_score
+    0.01|-2.326
+    0.99|+2.326
 
 
 
@@ -381,7 +419,7 @@ one_tail, two_tail
 
 ```python
 import statsmodels
-import statsmodels.api as sm
+import statsmodels.stats.api as sm
 
 print(statsmodels.__version__)
 ```
@@ -420,9 +458,7 @@ Below we use statsmodel to achieve similar result
 # To check statistical significance
 count = [1600, 1696]  # smaller: p1 < p2
 nobs = [80000, 80000]
-stat, pval = sm.stats.proportions_ztest(
-    count, nobs, alternative="smaller", prop_var=False
-)
+stat, pval = sm.proportions_ztest(count, nobs, alternative="smaller", prop_var=False)
 stat, pval, pval < 0.05
 ```
 
@@ -442,10 +478,10 @@ The sample size calculated below is similar to the ones in [abtestguide](https:/
 expected_improvement = 0.15  # 15%
 p1 = 0.02
 p2 = (1 + expected_improvement) * p1
-one_sided = sm.stats.samplesize_proportions_2indep_onetail(
+one_sided = sm.samplesize_proportions_2indep_onetail(
     p2 - p1, p1, 0.8, alternative="larger"
 )
-two_sided = sm.stats.samplesize_proportions_2indep_onetail(
+two_sided = sm.samplesize_proportions_2indep_onetail(
     p2 - p1, p1, 0.8, alternative="two-sided"
 )
 
@@ -465,17 +501,15 @@ I couldn't find the equivalent when using statsmodel
 ```python
 from math import ceil
 
-import statsmodels.api as sm
-
 init_prop = 0.02
 mde_prop = 0.02 * 1.15
-effect_size = sm.stats.proportion_effectsize(init_prop, mde_prop)
+effect_size = sm.proportion_effectsize(init_prop, mde_prop)
 print(
     f"For a change from {init_prop:.2f} to {mde_prop:.2f} - the effect size is {effect_size:.4f}."
 )
 
 
-sample_size = sm.stats.zt_ind_solve_power(
+sample_size = sm.zt_ind_solve_power(
     effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="two-sided"
 )
 print(
@@ -504,7 +538,7 @@ def calculate_effect_size(baseline_rate, expected_rate):
 
 
 effect_size = calculate_effect_size(0.02, 0.02 * 1.15)
-sample_size = sm.stats.zt_ind_solve_power(
+sample_size = sm.zt_ind_solve_power(
     effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="two-sided"
 )
 print(
@@ -517,11 +551,11 @@ print(
 
 
 ```python
-es = sm.stats.proportion_effectsize(0.02, 0.023)
-m = sm.stats.tt_ind_solve_power(
+es = sm.proportion_effectsize(0.02, 0.023)
+m = sm.tt_ind_solve_power(
     effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
 )
-n = sm.stats.tt_ind_solve_power(
+n = sm.tt_ind_solve_power(
     effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
 )
 m, n
@@ -531,24 +565,5 @@ m, n
 
 
     (36650.74612637405, 28869.758338145828)
-
-
-
-
-```python
-es = sm.stats.proportion_effectsize(0.02, 0.023)
-m = sm.stats.zt_ind_solve_power(
-    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
-)
-n = sm.stats.zt_ind_solve_power(
-    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
-)
-m, n
-```
-
-
-
-
-    (36649.785198663005, 28869.081600694815)
 
 

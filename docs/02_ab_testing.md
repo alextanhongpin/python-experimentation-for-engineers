@@ -5,6 +5,10 @@ Three steps in A/B testing:
 - measure: use randomization to measure
 - analyze: compare the busines metric estimates of A and B
 
+See here https://rowannicholls.github.io/python/statistics/sample_size.html
+
+The calculation should be similar to [2.1.2 Two × One-Sided Equality](https://rowannicholls.github.io/python/statistics/sample_size.html)
+
 ## Simulate the trading system
 
 
@@ -399,6 +403,7 @@ np.sqrt(n) > std * scipy.stats.norm.ppf(1 - alpha) / (x - mu)
 ```python
 def ab_test_design(sd_1_delta, practical_significance):
     num_individual_measurements = (1.64 * sd_1_delta / practical_significance) ** 2
+    print(num_individual_measurements)
     return np.ceil(num_individual_measurements)
 ```
 
@@ -413,10 +418,30 @@ practical_significance = 1
 ab_test_design(sd_1_delta, practical_significance)
 ```
 
+    6.75708875830369
+
+
 
 
 
     7.0
+
+
+
+
+```python
+import statsmodels.stats.api as sm
+
+# effect_size is the difference in mean divided by the std deviation
+sm.tt_ind_solve_power(
+    effect_size=2 / sd_1_byse, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+)
+```
+
+
+
+
+    6.058765593255738
 
 
 
@@ -450,6 +475,23 @@ ab_test_design_2(sd_1_delta, prac_sig)
 
 
 
+
+```python
+from scipy import stats
+
+m = sm.tt_ind_solve_power(
+    effect_size=2 / 1.12, ratio=1, power=0.8, alpha=0.01, alternative="two-sided"
+)
+m, stats.norm.cdf(2.48), stats.norm.ppf(0.01)
+```
+
+
+
+
+    (9.120803496444017, 0.9934308808644532, -2.3263478740408408)
+
+
+
 ### Measure and analyze
 
 
@@ -472,8 +514,13 @@ def measure(min_individual_measurements):
 ```python
 np.random.seed(17)
 
-ind_asdaq, ind_byse = measure(16)
+# ind_asdaq, ind_byse = measure(16)
+ind_asdaq, ind_byse = measure(3)
+print(len(ind_asdaq), len(ind_byse))
 ```
+
+    1 3
+
 
 
 ```python
@@ -483,7 +530,7 @@ ind_byse.mean() - ind_asdaq.mean()
 
 
 
-    -2.7483767796620846
+    -1.1870713644978501
 
 
 
@@ -511,7 +558,7 @@ analyze(ind_asdaq, ind_byse)
 
 
 
-    -6.353995237966593
+    -3.0855234054503917
 
 
 
@@ -542,7 +589,7 @@ z_score(ind_asdaq, ind_byse)
 
 
 
-    -6.353995237966593
+    -3.0855234054503917
 
 
 
@@ -563,7 +610,7 @@ tstat, pvalue, zscore
 
 
 
-    (6.202020909921336, 5.574266926940068e-10, -6.0920335108226755)
+    (1.2596596554613593, 0.20779216525007327, -0.814105822690334)
 
 
 
@@ -588,3 +635,85 @@ n
 - design: determined the minimum number of individual measurements needed to be able to detect statistical significance. That number was given by $(2.48 * st_1_delta / prac_sig)**2$
 - measure: collect the prescribed number of individual measurements, and randomize between variants to remove confounder bias
 - analyze: ensure the difference in cost between BYSE and ASDAQ was **practically significant** (`delta <- prac_sig`) and **statistically significant** (`delta/se_delta <- 1.64`)
+
+
+```python
+# Mean of group 1, μ_1
+mu_1 = 11
+# Mean of group 2, μ_2
+mu_2 = 10
+# Sample standard deviation of group 1
+s_1 = 1.12
+# Sample standard deviation of group 2
+s_2 = 1.12
+# Sampling ratio, κ = n_1 / n_2
+kappa = 1
+
+# Type I error rate, α
+alpha = 0.05
+# Type II error rate, β
+beta = 0.2
+is_false_positive = 1  # Replace with 0 to get '7'
+
+n_1 = (s_1**2 + s_2**2 / kappa) * (
+    (st.norm.ppf(1 - alpha) + is_false_positive * st.norm.ppf(1 - beta)) / (mu_1 - mu_2)
+) ** 2
+n_1 = np.ceil(n_1)
+n_2 = kappa * n_1
+n_1, n_2
+```
+
+
+
+
+    (16.0, 16.0)
+
+
+
+
+```python
+import statsmodels.stats.power as sm
+
+mu_delta = 1
+power = 0.8
+alpha = 0.05
+n_2 = sm.normal_sample_size_one_tail(
+    mu_delta, power, alpha, std_null=sd_1_byse, std_alternative=None
+)
+n_2, n_2 * 2
+```
+
+
+
+
+    (7.766226942677346, 15.532453885354691)
+
+
+
+
+```python
+st.norm.ppf(0.5)
+```
+
+
+
+
+    0.0
+
+
+
+
+```python
+power = 0.5
+n_2 = sm.normal_sample_size_one_tail(
+    mu_delta, power, alpha, std_null=sd_1_byse, std_alternative=None
+)
+n_2, n_2 * 2
+```
+
+
+
+
+    (3.398571768807679, 6.797143537615358)
+
+

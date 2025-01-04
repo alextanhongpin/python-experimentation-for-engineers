@@ -32,14 +32,27 @@ def pprint(value):
 
 asdaq = ASDAQ()
 pprint(asdaq.sample())
-pprint(TimeOfDayEffectWrapper(asdaq).sample(tod="morning"))
+
+asdaq = TimeOfDayEffectWrapper(asdaq)
+pprint(asdaq.sample("morning"))
+pprint(asdaq.sample("afternoon"))
+
+byse = TimeOfDayEffectWrapper(BYSE())
+pprint(byse.sample())
 ```
 
-    $12.66
-    $12.31
+    $12.73
+    $14.94
+    $12.88
+    $10.52
 
 
 
 ```python
-
+pprint(np.mean([byse.sample() for _ in range(100)]))
+pprint(np.mean([asdaq.sample() for _ in range(100)]))
 ```
+
+    $9.99
+    $12.01
+
