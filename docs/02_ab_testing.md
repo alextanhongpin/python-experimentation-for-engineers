@@ -428,23 +428,6 @@ ab_test_design(sd_1_delta, practical_significance)
 
 
 
-
-```python
-import statsmodels.stats.api as sm
-
-# effect_size is the difference in mean divided by the std deviation
-sm.tt_ind_solve_power(
-    effect_size=2 / sd_1_byse, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
-)
-```
-
-
-
-
-    6.058765593255738
-
-
-
 Observation: If you take seven individual measurements, you'll have a 5% chance of a false positive - of incorrectly acting as if BYSE is better than ASDAQ.
 
 ### False Negatives
@@ -454,6 +437,7 @@ Observation: If you take seven individual measurements, you'll have a 5% chance 
 def ab_test_design_2(sd_1_delta, practical_significance):
     """A/B test design with power analysis"""
     num_individual_measurements = (2.48 * sd_1_delta / practical_significance) ** 2
+    print(num_individual_measurements)
     return np.ceil(num_individual_measurements)
 ```
 
@@ -468,6 +452,9 @@ prac_sig = 1.0
 ab_test_design_2(sd_1_delta, prac_sig)
 ```
 
+    15.451665191504688
+
+
 
 
 
@@ -477,10 +464,11 @@ ab_test_design_2(sd_1_delta, prac_sig)
 
 
 ```python
+import statsmodels.stats.api as sm
 from scipy import stats
 
-m = sm.tt_ind_solve_power(
-    effect_size=2 / 1.12, ratio=1, power=0.8, alpha=0.01, alternative="two-sided"
+m = sm.zt_ind_solve_power(
+    effect_size=1 / 1.12, ratio=1, power=0.8, alpha=0.05, alternative="larger"
 )
 m, stats.norm.cdf(2.48), stats.norm.ppf(0.01)
 ```
@@ -488,7 +476,7 @@ m, stats.norm.cdf(2.48), stats.norm.ppf(0.01)
 
 
 
-    (9.120803496444017, 0.9934308808644532, -2.3263478740408408)
+    (15.51079958367986, 0.9934308808644532, -2.3263478740408408)
 
 
 
@@ -614,19 +602,48 @@ tstat, pvalue, zscore
 
 
 
+Calculating sample size 
+
 
 ```python
-from statsmodels.stats.power import TTestIndPower, TTestPower
+import statsmodels.stats.api as sm
 
-obj = TTestIndPower()
-n = obj.solve_power(effect_size=1, alpha=0.05, power=0.8)
-n
+# effect_size is the difference in mean divided by the std deviation
+es = practical_significance / sd_1_byse
+n1 = sm.zt_ind_solve_power(
+    effect_size=es,
+    nobs1=None,
+    ratio=1,
+    power=0.5,  # 0
+    alpha=0.05,
+    alternative="larger",
+)
+n1, np.ceil(n1)
 ```
 
 
 
 
-    16.714722572276173
+    (6.7971436061089205, 7.0)
+
+
+
+
+```python
+n1 = sm.zt_ind_solve_power(
+    effect_size=es,
+    ratio=1,
+    power=0.8,  # 20%
+    alpha=0.05,
+    alternative="larger",
+)
+n1, np.ceil(n1)
+```
+
+
+
+
+    (15.53245388534377, 16.0)
 
 
 
@@ -653,67 +670,23 @@ kappa = 1
 alpha = 0.05
 # Type II error rate, β
 beta = 0.2
-is_false_positive = 1  # Replace with 0 to get '7'
+is_false_positive = 0  # Replace with 0 to get '7'
 
 n_1 = (s_1**2 + s_2**2 / kappa) * (
     (st.norm.ppf(1 - alpha) + is_false_positive * st.norm.ppf(1 - beta)) / (mu_1 - mu_2)
 ) ** 2
+print(n_1)
 n_1 = np.ceil(n_1)
 n_2 = kappa * n_1
 n_1, n_2
 ```
 
-
-
-
-    (16.0, 16.0)
-
-
-
-
-```python
-import statsmodels.stats.power as sm
-
-mu_delta = 1
-power = 0.8
-alpha = 0.05
-n_2 = sm.normal_sample_size_one_tail(
-    mu_delta, power, alpha, std_null=sd_1_byse, std_alternative=None
-)
-n_2, n_2 * 2
-```
+    6.78766741763457
 
 
 
 
-    (7.766226942677346, 15.532453885354691)
 
-
-
-
-```python
-st.norm.ppf(0.5)
-```
-
-
-
-
-    0.0
-
-
-
-
-```python
-power = 0.5
-n_2 = sm.normal_sample_size_one_tail(
-    mu_delta, power, alpha, std_null=sd_1_byse, std_alternative=None
-)
-n_2, n_2 * 2
-```
-
-
-
-
-    (3.398571768807679, 6.797143537615358)
+    (7.0, 7.0)
 
 
