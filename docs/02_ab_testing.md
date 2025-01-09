@@ -9,6 +9,8 @@ See here https://rowannicholls.github.io/python/statistics/sample_size.html
 
 The calculation should be similar to [2.1.2 Two × One-Sided Equality](https://rowannicholls.github.io/python/statistics/sample_size.html)
 
+https://www.statology.org/z-test-python/
+
 ## Simulate the trading system
 
 
@@ -449,7 +451,8 @@ sd_1_asdaq = np.array([trading_system("ASDAQ") for _ in range(100)]).std()
 sd_1_byse = sd_1_asdaq
 sd_1_delta = np.sqrt(sd_1_asdaq**2 + sd_1_byse**2)
 prac_sig = 1.0
-ab_test_design_2(sd_1_delta, prac_sig)
+nobs1 = ab_test_design_2(sd_1_delta, prac_sig)
+nobs1
 ```
 
     15.451665191504688
@@ -462,24 +465,6 @@ ab_test_design_2(sd_1_delta, prac_sig)
 
 
 
-
-```python
-import statsmodels.stats.api as sm
-from scipy import stats
-
-m = sm.zt_ind_solve_power(
-    effect_size=1 / 1.12, ratio=1, power=0.8, alpha=0.05, alternative="larger"
-)
-m, stats.norm.cdf(2.48), stats.norm.ppf(0.01)
-```
-
-
-
-
-    (15.51079958367986, 0.9934308808644532, -2.3263478740408408)
-
-
-
 ### Measure and analyze
 
 
@@ -489,12 +474,14 @@ def measure(min_individual_measurements):
     ind_byse = []
     while (
         len(ind_asdaq) < min_individual_measurements
-        and len(ind_byse) < min_individual_measurements
+        or len(ind_byse) < min_individual_measurements
     ):
         if np.random.randint(2) == 0:
-            ind_asdaq.append(trading_system("ASDAQ"))
+            if len(ind_asdaq) < min_individual_measurements:
+                ind_asdaq.append(trading_system("ASDAQ"))
         else:
-            ind_byse.append(trading_system("BYSE"))
+            if len(ind_byse) < min_individual_measurements:
+                ind_byse.append(trading_system("BYSE"))
     return np.array(ind_asdaq), np.array(ind_byse)
 ```
 
@@ -502,12 +489,11 @@ def measure(min_individual_measurements):
 ```python
 np.random.seed(17)
 
-# ind_asdaq, ind_byse = measure(16)
-ind_asdaq, ind_byse = measure(3)
+ind_asdaq, ind_byse = measure(nobs1)
 print(len(ind_asdaq), len(ind_byse))
 ```
 
-    1 3
+    16 16
 
 
 
@@ -518,7 +504,7 @@ ind_byse.mean() - ind_asdaq.mean()
 
 
 
-    -1.1870713644978501
+    -2.6262631797410325
 
 
 
@@ -546,24 +532,29 @@ analyze(ind_asdaq, ind_byse)
 
 
 
-    -3.0855234054503917
+    -7.175523933947565
 
 
 
 
 ```python
 def z_score(dist1, dist2):
+    """
+    https://www.statsmodels.org/dev/_modules/statsmodels/stats/weightstats.html#ztest
+    """
     assert isinstance(dist1, np.ndarray), "dist1 is not np.ndarray"
     assert isinstance(dist2, np.ndarray), "dist2 is not np.ndarray"
 
     mean1 = dist1.mean()
-    std_err1 = dist1.std() / np.sqrt(len(dist1))
-
     mean2 = dist2.mean()
-    std_err2 = dist2.std() / np.sqrt(len(dist2))
+    # Why minus 1?
+    # https://www.quora.com/Why-do-we-subtract-1-from-the-number-of-samples-for-sample-standard-deviation#:~:text=So%20why%20do%20we%20subtract,sample%20size)%20corrects%20this%20bias.
+    # https://www.reddit.com/r/learnmath/comments/lvxik0/why_do_we_divide_by_n1_and_not_n_when_calculating/?rdt=33845
+    std_err1 = dist1.std() / np.sqrt(len(dist1) - 1)
+    std_err2 = dist2.std() / np.sqrt(len(dist2) - 1)
+    std_err_delta = np.sqrt(std_err1**2 + std_err2**2)
 
     delta = mean2 - mean1
-    std_err_delta = np.sqrt(std_err2**2 + std_err1**2)
 
     z = delta / std_err_delta
     return z
@@ -577,7 +568,7 @@ z_score(ind_asdaq, ind_byse)
 
 
 
-    -3.0855234054503917
+    -6.947671174122912
 
 
 
@@ -590,15 +581,19 @@ Observation: because z is well below the threshold of -1.64, this result is stat
 import scipy.stats as st
 from statsmodels.stats.weightstats import ztest
 
-tstat, pvalue = ztest(ind_asdaq, ind_byse)
+# NOTE: The position of the X values are important.
+# X1 - X2, for smaller alternative.
+tstat, pvalue = ztest(ind_byse, ind_asdaq, usevar="unequal", alternative="smaller")
+# tstat is zscore.
 zscore = st.norm.ppf(pvalue)
-tstat, pvalue, zscore
+alpha = 0.05
+tstat, pvalue, zscore, st.norm.sf(abs(tstat)) < alpha
 ```
 
 
 
 
-    (1.2596596554613593, 0.20779216525007327, -0.814105822690334)
+    (-6.947671174122912, 1.8568267113497456e-12, -6.947671174122912, True)
 
 
 
