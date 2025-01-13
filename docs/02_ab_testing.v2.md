@@ -1,4 +1,6 @@
 ```python
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as st
@@ -48,10 +50,10 @@ byse = TimeOfDayEffectWrapper(byse)
 print(Money(byse.sample()))
 ```
 
-    $11.95
-    $13.56
-    $11.32
-    $10.17
+    $9.89
+    $11.07
+    $14.18
+    $10.88
 
 
 
@@ -60,24 +62,24 @@ print(Money(np.mean([byse.sample() for _ in range(100)])))
 print(Money(np.mean([asdaq.sample() for _ in range(100)])))
 ```
 
-    $10.06
-    $12.13
+    $10.10
+    $11.90
 
 
 
 ```python
-def aggregate_measurements(n):
-    return np.mean([asdaq.sample() for _ in range(n)])
+def aggregate_measurements(n, exchange: Exchange):
+    return np.mean([exchange.sample() for _ in range(n)])
 
 
-print(np.std([aggregate_measurements(10) for _ in range(1000)]))
-print(np.std([aggregate_measurements(100) for _ in range(1000)]))
-print(np.std([aggregate_measurements(1000) for _ in range(1000)]))
+print(np.std([aggregate_measurements(10, asdaq) for _ in range(1000)]))
+print(np.std([aggregate_measurements(100, asdaq) for _ in range(1000)]))
+print(np.std([aggregate_measurements(1000, asdaq) for _ in range(1000)]))
 ```
 
-    0.32598030127200134
-    0.1020042867238196
-    0.031182526602051782
+    0.3075125625172733
+    0.10380567068958116
+    0.03113940352719048
 
 
 
@@ -86,16 +88,16 @@ sample_size = 10
 sample_count = 1000
 
 sample_population = np.array(
-    [aggregate_measurements(sample_size) for _ in range(sample_count)]
+    [aggregate_measurements(sample_size, asdaq) for _ in range(sample_count)]
 )
 print("Mean: {:.4f}".format(sample_population.mean()))
 print("Std Error: {:.4f}".format(st.sem(sample_population)))
 print("Std Deviation: {:.4f}".format(sample_population.std()))
 ```
 
-    Mean: 12.0042
-    Std Error: 0.0101
-    Std Deviation: 0.3206
+    Mean: 12.0169
+    Std Error: 0.0100
+    Std Deviation: 0.3166
 
 
 
@@ -107,6 +109,25 @@ plt.title("Normal distribution");
 
     
 ![png](02_ab_testing.v2_files/02_ab_testing.v2_5_0.png)
+    
+
+
+
+```python
+asdaq_sample = np.array(
+    [aggregate_measurements(sample_size, asdaq) for _ in range(sample_count)]
+)
+byse_sample = np.array(
+    [aggregate_measurements(sample_size, byse) for _ in range(sample_count)]
+)
+plt.hist(asdaq_sample, label="asdaq", alpha=0.9)
+plt.hist(byse_sample, label="byse", alpha=0.9)
+plt.legend();
+```
+
+
+    
+![png](02_ab_testing.v2_files/02_ab_testing.v2_6_0.png)
     
 
 
@@ -152,7 +173,7 @@ plt.boxplot(
 
 
     
-![png](02_ab_testing.v2_files/02_ab_testing.v2_8_0.png)
+![png](02_ab_testing.v2_files/02_ab_testing.v2_9_0.png)
     
 
 
@@ -165,8 +186,8 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(asdaq_samples))
 ```
 
-    sem=0.1697 | std=0.9894 | mean=12.0583
-    35
+    sem=0.1561 | std=0.8407 | mean=11.8889
+    30
 
 
 
@@ -178,8 +199,8 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(byse_samples))
 ```
 
-    sem=0.1952 | std=1.0511 | mean=9.8754
-    30
+    sem=0.1537 | std=0.9224 | mean=10.2625
+    37
 
 
 
@@ -198,13 +219,61 @@ tstat, pvalue, pvalue < 0.05, st.norm.sf(tstat)
 
 
 
-    (8.440166687539547, 1.5844271773879332e-17, True, 1.5844271773879332e-17)
+    (7.422491253525129, 5.746879110687696e-14, True, 5.746879110687696e-14)
 
 
 
 
 ```python
-es = 1 / 1
+# correct if the population S.D. is expected to be equal for the two groups.
+def cohens_d(x1, x2):
+    """
+    Specify the division argument on the variance with ddof=1 into the std function,
+    i.e. numpy.std(c0, ddof=1).
+    numpy's standard deviation default behaviour is to divide by n,
+    whereas with ddof=1 it will divide by n-1.
+    """
+    n1 = len(x1)
+    n2 = len(x2)
+    s1 = np.std(x1, ddof=1)
+    s2 = np.std(x2, ddof=1)
+    # We can also operate under the assumption that the standard deviation of s2 = s1
+
+    # Difference in mean
+    u = np.mean(x1) - np.mean(x2)
+    # Pooled standard deviation.
+    s = np.sqrt(((n1 - 1) * s1**2 + (n2 - 1) * s2**2) / (n1 + n2 - 2))
+    return u / s
+
+
+es = cohens_d(asdaq_samples, byse_samples)
+es
+```
+
+
+
+
+    1.806401451348112
+
+
+
+
+```python
+import statistics
+
+statistics.stdev(asdaq_samples), np.std(asdaq_samples, ddof=1)
+```
+
+
+
+
+    (0.8551193398833393, 0.8551193398833392)
+
+
+
+
+```python
+# es = 1 / 1
 alpha = 0.05
 power = 0.8
 sm.NormalIndPower().solve_power(
@@ -220,7 +289,7 @@ sm.NormalIndPower().solve_power(
 
 
 
-    12.365112414769648
+    3.78939148814927
 
 
 
@@ -239,7 +308,7 @@ sm.zt_ind_solve_power(
 
 
 
-    12.365112414769648
+    3.78939148814927
 
 
 
@@ -247,66 +316,55 @@ If both sample has the same size, the pooled variance is simple the average:
 
 
 ```python
-# Mean of group 1, μ_1
-mu_1 = np.mean(asdaq_samples)
-# Mean of group 2, μ_2
-mu_2 = np.mean(byse_samples)
-# Sample standard deviation of group 1
-s_1 = np.std(asdaq_samples)
-# Sample standard deviation of group 2
-s_2 = np.std(byse_samples)
-# Sampling ratio, κ = n_1 / n_2
-kappa = 1
+def sample_size(x1, x2, alpha=0.05, beta=0.2, kappa=1.0):
+    # Sampling ratio, κ = n_1 / n_2
+    # Type I error rate, α
+    # Type II error rate, β
+    # Mean of group 1, μ_1 and Mean of group 2, μ_2
+    u1, u2 = np.mean(x1), np.mean(x2)
+    # Sample standard deviation of group 1 and Sample standard deviation of group 2
+    s1, s2 = np.std(x1, ddof=1), np.std(x2, ddof=1)
+    # We can also operate under the assumption that the standard deviation is the same.
+    # s2 = s1
 
-# Type I error rate, α
-alpha = 0.05
-# Type II error rate, β
-beta = 0.2
+    n1 = (s1**2 + s2**2 / kappa) * (
+        (st.norm.ppf(1 - alpha) + st.norm.ppf(1 - beta)) / (u1 - u2)
+    ) ** 2
+    return n1
 
-n_1 = (s_1**2 + s_2**2 / kappa) * (
-    (st.norm.ppf(1 - alpha) + st.norm.ppf(1 - beta)) / (mu_1 - mu_2)
-) ** 2
-n_1
+
+sample_size(asdaq_samples, byse_samples)
 ```
 
 
 
 
-    2.7036916741604924
+    3.7533185528127317
 
 
 
 
 ```python
-s_1 = np.std(asdaq_samples)
-m_1 = np.mean(asdaq_samples)
-n_1 = len(asdaq_samples)
-s_2 = np.std(byse_samples)
-m_2 = np.mean(byse_samples)
-n_2 = len(byse_samples)
+def analyze(x1, x2):
+    s1, s2 = np.std(x1, ddof=1), np.std(x2, ddof=1)
+    u1, u2 = np.mean(x1), np.mean(x2)
+    n1, n2 = len(x1), len(x2)
 
-# If the variance are equal, we can use the pooled variance.
-# pooled_var = ((n_1 - 1) * s_1**2 + (n_2 - 1) * s_2**2) / (n_1 - 1 + n_2 - 1)
-z = (m_1 - m_2) / np.sqrt(s_1**2 / (n_1 - 1) + s_2**2 / (n_2 - 1))
-z
+    # If the variance are equal, we can use the pooled variance.
+    # pooled_var = ((n_1 - 1) * s_1**2 + (n_2 - 1) * s_2**2) / (n_1 - 1 + n_2 - 1)
+    u = u1 - u2
+    s = np.sqrt(s1**2 / n1 + s2**2 / n2)
+    z = u / s
+    p = st.norm.sf(z)
+    return z, p
+
+
+analyze(asdaq_samples, byse_samples)
 ```
 
 
 
 
-    8.440166687539547
-
-
-
-
-```python
-p = st.norm.sf(z) 
-p, p < alpha
-```
-
-
-
-
-    (1.5844271773879332e-17, True)
+    (7.422491253525129, 5.746879110687696e-14)
 
 
