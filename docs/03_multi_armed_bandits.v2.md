@@ -539,3 +539,128 @@ def rpm_select_arm(I_clickeds):
         return np.random.randint(len(I_clickeds))
     return i[0]
 ```
+
+
+```python
+class OnlineBootstrap:
+    def __init__(self, num_bs_means):
+        self._sums = np.zeros(shape=(num_bs_means,))
+        self._n = np.zeros(shape=(num_bs_means,))
+        self._count = 0
+
+    def append(self, clicked):
+        i = np.where(
+            np.random.randint(
+                2,
+                size=(
+                    len(
+                        self._n,
+                    )
+                ),
+            )
+            == 0
+        )[0]
+        self._sums[i] += clicked
+        self._n[i] += 1
+        self._count += 1
+
+    def CTR_estimate(self):
+        i = np.random.randint(len(self._n))
+        if self._n[i] == 0:
+            return np.inf
+        return self._sums[i] / self._n[i]
+
+    def count(self):
+        return self._count
+```
+
+
+```python
+def rpm_select_arm_ob(obs):
+    ctrs = [ob.CTR_estimate() for ob in obs]
+    ctrs = np.array(ctrs)
+    i = np.where(ctrs == ctrs.max())[0]
+    return np.random.choice(i)
+```
+
+
+```python
+def estimate_pbest_ob(obs):
+    counts = [0] * len(obs)
+    num_samples = 100
+    for _ in range(num_samples):
+        ctrs = [ob.CTR_estimate() for ob in obs]
+        ctrs = np.array(ctrs)
+        i = np.where(ctrs == ctrs.max())[0]
+        if len(i) == 1:
+            counts[i[0]] += 1
+    return np.array(counts) / num_samples
+```
+
+
+```python
+def thompson_sampling():
+    k = 4
+    num_bs_means = 100
+    p_stop = 0.95
+    smallest_sum_difference = 1
+    prac_sig = 0.001
+
+    min_samples_per_arm = smallest_sum_difference / prac_sig
+    obs = [OnlineBootstrap(num_bs_means) for _ in range(k)]
+    sum_clicks = 0.0
+    num_ads = 0.0
+    ctr_vs_n = []
+
+    n = 0
+    while True:
+        num_samples_per_arm = [ob.count() for ob in obs]
+        i_too_few = np.where(np.array(num_samples_per_arm) < min_samples_per_arm)[0]
+        if len(i_too_few) > 0:
+            i_selected = np.random.choice(i_too_few)
+        else:
+            i_selected = rpm_select_arm_ob(obs)
+        i_clicked = measure_arm(i_selected)
+        obs[i_selected].append(i_clicked)
+        sum_clicks += i_clicked
+        num_ads += 1
+        ctr_vs_n.append(sum_clicks / num_ads)
+
+        n += 1
+        if len(i_too_few) == 0 and n % 100 == 0:
+            p_bests = estimate_pbest_ob(obs)
+            i_best_arm = np.where(p_bests == p_bests.max())[0]
+            if len(i_best_arm) == 1 and p_bests.max() > p_stop:
+                break
+
+    return ctr_vs_n, i_best_arm
+```
+
+
+```python
+ctr_vs_n_thompson_sampling, i_best_arm = thompson_sampling()
+plt.plot(ctr_vs_n, label="CTR vs N")
+plt.plot(ctr_vs_n_greedy, label="Epsilon greedy")
+plt.plot(ctr_vs_n_greedy_decay, label="Epsilon greedy decay")
+plt.plot(ctr_vs_n_greedy_decay_multi, label="Epsilon greedy decay multi")
+plt.plot(ctr_vs_n_thompson_sampling, label="Thompson sampling")
+plt.legend();
+```
+
+
+    
+![png](03_multi_armed_bandits.v2_files/03_multi_armed_bandits.v2_35_0.png)
+    
+
+
+
+```python
+i_best_arm
+```
+
+
+
+
+    array([3])
+
+
