@@ -604,7 +604,8 @@ Calculating sample size
 import statsmodels.stats.api as sm
 
 # effect_size is the difference in mean divided by the std deviation
-es = practical_significance / sd_1_byse
+# es = practical_significance / sd_1_byse
+es = practical_significance / 1.12 
 n1 = sm.zt_ind_solve_power(
     effect_size=es,
     nobs1=None,
@@ -619,7 +620,7 @@ n1, np.ceil(n1)
 
 
 
-    (6.7971436061089205, 7.0)
+    (6.787667486366592, 7.0)
 
 
 
