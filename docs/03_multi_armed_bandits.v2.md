@@ -549,6 +549,7 @@ class OnlineBootstrap:
         self._count = 0
 
     def append(self, clicked):
+        # Generates a 0 or 1 up to length n, take the zeros and update the indices.
         i = np.where(
             np.random.randint(
                 2,
