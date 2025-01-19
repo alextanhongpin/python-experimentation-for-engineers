@@ -438,8 +438,9 @@ print(x[i], y[i])
 
 
 ```python
-plt.contourf(x0_values, x1_values, y.reshape(-1, x0_values.shape[0]))
-plt.scatter(*x[i]);
+plt.contourf(x0_values, x1_values, y.reshape(-1, x0_values.shape[0]), levels=20)
+plt.scatter(*x[i])
+plt.colorbar();
 ```
 
 
@@ -474,5 +475,37 @@ aggregate_measurement[0] - 2 * standard_error[0], aggregate_measurement[
 
 
     (0.32309596091466963, 0.41693173841779907)
+
+
+
+
+```python
+from scipy.optimize import minimize
+```
+
+
+```python
+def objective(args):
+    # The negative is to minimize the value, so we are finding the max values.
+    return -p.predict(PolynomialFeatures(degree=2).fit_transform(args.reshape(-1, 2)))
+
+
+minimize(objective, (0, 0))
+```
+
+
+
+
+      message: Optimization terminated successfully.
+      success: True
+       status: 0
+          fun: -0.39273874534807307
+            x: [ 1.145e+00  2.763e+00]
+          nit: 5
+          jac: [ 6.557e-07  2.965e-06]
+     hess_inv: [[ 8.385e-01  6.888e-01]
+                [ 6.888e-01  3.080e+00]]
+         nfev: 18
+         njev: 6
 
 
