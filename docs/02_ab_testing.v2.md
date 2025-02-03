@@ -50,10 +50,10 @@ byse = TimeOfDayEffectWrapper(byse)
 print(Money(byse.sample()))
 ```
 
-    $10.10
-    $12.92
-    $10.41
-    $9.54
+    $10.84
+    $11.36
+    $11.11
+    $9.05
 
 
 
@@ -62,8 +62,8 @@ print(Money(np.mean([byse.sample() for _ in range(100)])))
 print(Money(np.mean([asdaq.sample() for _ in range(100)])))
 ```
 
-    $9.84
-    $12.04
+    $10.11
+    $12.07
 
 
 
@@ -77,9 +77,9 @@ print(np.std([aggregate_measurements(100, asdaq) for _ in range(1000)]))
 print(np.std([aggregate_measurements(1000, asdaq) for _ in range(1000)]))
 ```
 
-    0.31283346581290916
-    0.10087738136912469
-    0.03147607502280195
+    0.3198147029019297
+    0.1013954311789923
+    0.03172889077808723
 
 
 
@@ -95,9 +95,9 @@ print("Std Error: {:.4f}".format(st.sem(sample_population)))
 print("Std Deviation: {:.4f}".format(sample_population.std()))
 ```
 
-    Mean: 11.9891
-    Std Error: 0.0096
-    Std Deviation: 0.3039
+    Mean: 11.9937
+    Std Error: 0.0099
+    Std Deviation: 0.3136
 
 
 
@@ -186,8 +186,8 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(asdaq_samples))
 ```
 
-    sem=0.2135 | std=1.1885 | mean=11.6697
-    32
+    sem=0.1638 | std=0.8822 | mean=11.8228
+    30
 
 
 
@@ -199,7 +199,7 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(byse_samples))
 ```
 
-    sem=0.1606 | std=0.8649 | mean=9.9430
+    sem=0.1694 | std=0.9124 | mean=9.7618
     30
 
 
@@ -219,7 +219,7 @@ tstat, pvalue, pvalue < 0.05, st.norm.sf(tstat)
 
 
 
-    (6.463670651523492, 5.109658360505467e-11, True, 5.109658360505467e-11)
+    (8.745161849389135, 1.1134809803486333e-18, True, 1.1134809803486333e-18)
 
 
 
@@ -253,7 +253,7 @@ es
 
 
 
-    1.6261971850246641
+    2.2579910801715046
 
 
 
@@ -267,7 +267,30 @@ statistics.stdev(asdaq_samples), np.std(asdaq_samples, ddof=1)
 
 
 
-    (1.2075548861950471, 1.2075548861950471)
+    (0.8972895404639324, 0.8972895404639324)
+
+
+
+
+```python
+es, var_ = sm.effectsize_smd(
+    # Treatment.
+    np.mean(byse_samples),
+    np.std(byse_samples, ddof=1),
+    len(byse_samples),
+    # Control.
+    np.mean(asdaq_samples),
+    np.std(asdaq_samples, ddof=1),
+    len(asdaq_samples),
+)
+es = np.abs(es)
+es, var_
+```
+
+
+
+
+    (2.228666520688758, 0.11096700969591153)
 
 
 
@@ -289,7 +312,7 @@ sm.NormalIndPower().solve_power(
 
 
 
-    4.675754857627041
+    2.4894763926783203
 
 
 
@@ -308,7 +331,7 @@ sm.zt_ind_solve_power(
 
 
 
-    4.675754857627041
+    2.4894763926783203
 
 
 
@@ -327,7 +350,7 @@ sm.tt_ind_solve_power(
 
 
 
-    5.500558161189811
+    3.4312713807923068
 
 
 
@@ -358,7 +381,7 @@ sample_size(asdaq_samples, byse_samples)
 
 
 
-    4.628452969395122
+    2.4252342732191563
 
 
 
@@ -384,7 +407,7 @@ analyze(asdaq_samples, byse_samples)
 
 
 
-    (6.463670651523492, 5.109658360505467e-11)
+    (8.745161849389135, 1.1134809803486333e-18)
 
 
 
@@ -400,6 +423,6 @@ sm.ttest_ind(
 
 
 
-    (6.4636706515234765, 1.2695504612656468e-08, 56.63173232071476)
+    (8.745161849389127, 1.7664545981488526e-12, 57.93449208964887)
 
 
