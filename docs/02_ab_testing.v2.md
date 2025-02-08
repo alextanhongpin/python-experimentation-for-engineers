@@ -12,6 +12,27 @@ plt.rc("figure", figsize=(16, 10))
 
 
 ```python
+def plot_normal(mu=0, variance=1, label=""):
+    sigma = math.sqrt(variance)
+    x = np.linspace(mu - 3 * sigma, mu + 3 * sigma, 100)
+    plt.plot(x, st.norm.pdf(x, mu, sigma), label=label)
+```
+
+
+```python
+mu = 0
+variance = 1
+plot_normal(mu, variance)
+```
+
+
+    
+![png](02_ab_testing.v2_files/02_ab_testing.v2_2_0.png)
+    
+
+
+
+```python
 class Money:
     def __init__(self, value):
         self.value = value
@@ -50,10 +71,10 @@ byse = TimeOfDayEffectWrapper(byse)
 print(Money(byse.sample()))
 ```
 
-    $10.84
-    $11.36
+    $11.39
+    $13.91
+    $13.23
     $11.11
-    $9.05
 
 
 
@@ -62,8 +83,8 @@ print(Money(np.mean([byse.sample() for _ in range(100)])))
 print(Money(np.mean([asdaq.sample() for _ in range(100)])))
 ```
 
-    $10.11
-    $12.07
+    $10.15
+    $12.01
 
 
 
@@ -77,9 +98,9 @@ print(np.std([aggregate_measurements(100, asdaq) for _ in range(1000)]))
 print(np.std([aggregate_measurements(1000, asdaq) for _ in range(1000)]))
 ```
 
-    0.3198147029019297
-    0.1013954311789923
-    0.03172889077808723
+    0.30962485223570996
+    0.09841203563413452
+    0.032093126668497396
 
 
 
@@ -95,9 +116,9 @@ print("Std Error: {:.4f}".format(st.sem(sample_population)))
 print("Std Deviation: {:.4f}".format(sample_population.std()))
 ```
 
-    Mean: 11.9937
+    Mean: 11.9966
     Std Error: 0.0099
-    Std Deviation: 0.3136
+    Std Deviation: 0.3139
 
 
 
@@ -108,7 +129,7 @@ plt.title("Normal distribution");
 
 
     
-![png](02_ab_testing.v2_files/02_ab_testing.v2_5_0.png)
+![png](02_ab_testing.v2_files/02_ab_testing.v2_7_0.png)
     
 
 
@@ -127,7 +148,7 @@ plt.legend();
 
 
     
-![png](02_ab_testing.v2_files/02_ab_testing.v2_6_0.png)
+![png](02_ab_testing.v2_files/02_ab_testing.v2_8_0.png)
     
 
 
@@ -173,7 +194,7 @@ plt.boxplot(
 
 
     
-![png](02_ab_testing.v2_files/02_ab_testing.v2_9_0.png)
+![png](02_ab_testing.v2_files/02_ab_testing.v2_11_0.png)
     
 
 
@@ -186,7 +207,7 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(asdaq_samples))
 ```
 
-    sem=0.1638 | std=0.8822 | mean=11.8228
+    sem=0.1628 | std=0.8766 | mean=11.9476
     30
 
 
@@ -199,8 +220,21 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(byse_samples))
 ```
 
-    sem=0.1694 | std=0.9124 | mean=9.7618
-    30
+    sem=0.2142 | std=1.1925 | mean=9.9220
+    32
+
+
+
+```python
+plot_normal(np.mean(asdaq_samples), np.var(asdaq_samples), label="ASDAQ")
+plot_normal(np.mean(byse_samples), np.var(byse_samples), label="BYSE")
+plt.legend();
+```
+
+
+    
+![png](02_ab_testing.v2_files/02_ab_testing.v2_14_0.png)
+    
 
 
 
@@ -219,7 +253,7 @@ tstat, pvalue, pvalue < 0.05, st.norm.sf(tstat)
 
 
 
-    (8.745161849389135, 1.1134809803486333e-18, True, 1.1134809803486333e-18)
+    (7.529555609190837, 2.545664984928039e-14, True, 2.545664984928039e-14)
 
 
 
@@ -253,7 +287,7 @@ es
 
 
 
-    2.2579910801715046
+    1.8949318386555227
 
 
 
@@ -267,7 +301,7 @@ statistics.stdev(asdaq_samples), np.std(asdaq_samples, ddof=1)
 
 
 
-    (0.8972895404639324, 0.8972895404639324)
+    (0.8915442753255091, 0.8915442753255092)
 
 
 
@@ -290,7 +324,7 @@ es, var_
 
 
 
-    (2.228666520688758, 0.11096700969591153)
+    (1.8711460833585916, 0.09473479445345216)
 
 
 
@@ -312,7 +346,7 @@ sm.NormalIndPower().solve_power(
 
 
 
-    2.4894763926783203
+    3.5316929921976294
 
 
 
@@ -331,7 +365,7 @@ sm.zt_ind_solve_power(
 
 
 
-    2.4894763926783203
+    3.5316929921976294
 
 
 
@@ -350,7 +384,7 @@ sm.tt_ind_solve_power(
 
 
 
-    3.4312713807923068
+    4.402099195286219
 
 
 
@@ -381,7 +415,7 @@ sample_size(asdaq_samples, byse_samples)
 
 
 
-    2.4252342732191563
+    3.4097786493628504
 
 
 
@@ -407,7 +441,7 @@ analyze(asdaq_samples, byse_samples)
 
 
 
-    (8.745161849389135, 1.1134809803486333e-18)
+    (7.529555609190837, 2.545664984928039e-14)
 
 
 
@@ -423,6 +457,57 @@ sm.ttest_ind(
 
 
 
-    (8.745161849389127, 1.7664545981488526e-12, 57.93449208964887)
+    (7.529555609190837, 2.111316909557754e-10, 56.87119091485603)
 
+
+
+
+```python
+## Validating
+
+# Number of individual samples to collect.
+n = 3
+test_asdaq_samples = np.random.choice(asdaq_samples, n)
+test_byse_samples = np.random.choice(byse_samples, n)
+```
+
+
+```python
+tstat, pvalue = sm.ztest(
+    test_asdaq_samples,  # Control, A
+    test_byse_samples,  # Treatment, B
+    usevar="unequal",
+    alternative="larger",
+)
+print("z-score:", np.round(tstat, 4))
+print("p-value:", np.round(pvalue, 4))
+print("reject h0:", pvalue < 0.05)
+```
+
+    z-score: 2.1395
+    p-value: 0.0162
+    reject h0: True
+
+
+
+```python
+n = 3
+
+test_asdaq_samples = np.random.choice(asdaq_samples, n)
+# Assuming we use the same samples as ASDAQ, just different measurements.
+test_byse_samples = np.random.choice(asdaq_samples, n)
+tstat, pvalue = sm.ztest(
+    test_asdaq_samples,  # Control, A
+    test_byse_samples,  # Treatment, B
+    usevar="unequal",
+    alternative="larger",
+)
+print("z-score:", np.round(tstat, 4))
+print("p-value:", np.round(pvalue, 4))
+print("reject h0:", pvalue < 0.05)
+```
+
+    z-score: 1.2147
+    p-value: 0.1122
+    reject h0: False
 
