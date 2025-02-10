@@ -71,10 +71,10 @@ byse = TimeOfDayEffectWrapper(byse)
 print(Money(byse.sample()))
 ```
 
-    $11.37
-    $12.52
-    $11.57
-    $12.45
+    $11.29
+    $12.37
+    $10.59
+    $11.06
 
 
 
@@ -83,8 +83,8 @@ print(Money(np.mean([byse.sample() for _ in range(100)])))
 print(Money(np.mean([asdaq.sample() for _ in range(100)])))
 ```
 
-    $9.81
-    $11.99
+    $10.03
+    $11.95
 
 
 
@@ -98,9 +98,9 @@ print(np.std([aggregate_measurements(100, asdaq) for _ in range(1000)]))
 print(np.std([aggregate_measurements(1000, asdaq) for _ in range(1000)]))
 ```
 
-    0.3216773191685056
-    0.09896203464547156
-    0.03151095966965939
+    0.31478235874225285
+    0.09838429118781078
+    0.03192415473172491
 
 
 
@@ -116,9 +116,9 @@ print("Std Error: {:.4f}".format(st.sem(sample_population)))
 print("Std Deviation: {:.4f}".format(sample_population.std()))
 ```
 
-    Mean: 12.0027
-    Std Error: 0.0100
-    Std Deviation: 0.3163
+    Mean: 12.0138
+    Std Error: 0.0099
+    Std Deviation: 0.3120
 
 
 
@@ -207,7 +207,7 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(asdaq_samples))
 ```
 
-    sem=0.1789 | std=0.9632 | mean=12.1839
+    sem=0.1864 | std=1.0040 | mean=11.9427
     30
 
 
@@ -220,8 +220,8 @@ print("sem={:.4f} | std={:.4f} | mean={:.4f}".format(sem, std, mean))
 print(len(byse_samples))
 ```
 
-    sem=0.1987 | std=1.0699 | mean=10.0852
-    30
+    sem=0.1474 | std=0.9438 | mean=10.1549
+    42
 
 
 
@@ -253,7 +253,7 @@ tstat, pvalue, pvalue < 0.05, st.norm.sf(tstat)
 
 
 
-    (7.850943901681989, 2.0645882083658725e-15, True, 2.0645882083658725e-15)
+    (7.522193699003272, 2.693235066418762e-14, True, 2.693235066418762e-14)
 
 
 
@@ -287,7 +287,7 @@ es
 
 
 
-    2.027104998881535
+    1.818525393844541
 
 
 
@@ -301,7 +301,7 @@ statistics.stdev(asdaq_samples), np.std(asdaq_samples, ddof=1)
 
 
 
-    (0.9796914614424987, 0.9796914614424987)
+    (1.0211818137634798, 1.0211818137634798)
 
 
 
@@ -324,7 +324,7 @@ es, var_
 
 
 
-    (2.000778959935021, 0.10237052366380067)
+    (1.7989713573515889, 0.08091818732630864)
 
 
 
@@ -346,7 +346,7 @@ sm.NormalIndPower().solve_power(
 
 
 
-    3.0888720398399876
+    3.820757397516575
 
 
 
@@ -365,7 +365,7 @@ sm.zt_ind_solve_power(
 
 
 
-    3.0888720398399876
+    3.820757397516575
 
 
 
@@ -384,7 +384,7 @@ sm.tt_ind_solve_power(
 
 
 
-    3.9847615236149254
+    4.677329390106186
 
 
 
@@ -415,7 +415,7 @@ sample_size(asdaq_samples, byse_samples)
 
 
 
-    3.00916257418671
+    3.7822460278450882
 
 
 
@@ -441,7 +441,7 @@ analyze(asdaq_samples, byse_samples)
 
 
 
-    (7.850943901681989, 2.0645882083658725e-15)
+    (7.522193699003273, 2.6932350664187316e-14)
 
 
 
@@ -457,7 +457,7 @@ sm.ttest_ind(
 
 
 
-    (7.850943901681982, 5.833343885895734e-11, 57.372038438430415)
+    (7.522193699003272, 1.6041495447359274e-10, 60.00114424536958)
 
 
 
@@ -484,9 +484,29 @@ print("p-value:", np.round(pvalue, 4))
 print("reject h0:", pvalue < 0.05)
 ```
 
-    z-score: 0.8652
-    p-value: 0.1935
-    reject h0: False
+    z-score: 2.5535
+    p-value: 0.0053
+    reject h0: True
+
+
+
+```python
+tstat, pvalue, df = sm.ttest_ind(
+    asdaq_samples,  # Control, A
+    byse_samples,  # Treatment, B
+    usevar="unequal",
+    alternative="larger",
+)
+print("z-score:", np.round(tstat, 4))
+print("p-value:", np.round(pvalue, 4))
+print("df:", df)
+print("reject h0:", pvalue < 0.05)
+```
+
+    z-score: 7.5222
+    p-value: 0.0
+    df: 60.00114424536958
+    reject h0: True
 
 
 
@@ -503,9 +523,9 @@ print("df:", df)
 print("reject h0:", pvalue < 0.05)
 ```
 
-    z-score: 0.8652
-    p-value: 0.2195
-    df: 3.7253810647154575
+    z-score: 2.5535
+    p-value: 0.0513
+    df: 2.44513487789165
     reject h0: False
 
 
@@ -517,7 +537,7 @@ st.ttest_ind(test_asdaq_samples, test_byse_samples)
 
 
 
-    TtestResult(statistic=0.8651649798238944, pvalue=0.4357510496026244, df=4.0)
+    TtestResult(statistic=2.55353718605159, pvalue=0.06306844114724655, df=4.0)
 
 
 
@@ -539,8 +559,8 @@ print("p-value:", np.round(pvalue, 4))
 print("reject h0:", pvalue < 0.05)
 ```
 
-    z-score: 1.2243
-    p-value: 0.1104
+    z-score: -0.9057
+    p-value: 0.8175
     reject h0: False
 
 
@@ -552,6 +572,18 @@ st.ttest_ind(test_asdaq_samples, test_byse_samples)
 
 
 
-    TtestResult(statistic=1.22429307496321, pvalue=0.28801701679227576, df=4.0)
+    TtestResult(statistic=-0.9057427717065338, pvalue=0.416296560860438, df=4.0)
+
+
+
+
+```python
+st.ttest_ind(np.random.choice(asdaq_samples, 10), np.random.choice(asdaq_samples, 10))
+```
+
+
+
+
+    TtestResult(statistic=-1.0493027767393903, pvalue=0.307923939649284, df=18.0)
 
 
