@@ -146,7 +146,7 @@ norm.cdf(lower), norm.cdf(upper)
 
 
 
-    (0.02499999999999998, 0.975)
+    (0.004999999999999998, 0.995)
 
 
 
@@ -259,7 +259,7 @@ num_side = 1
 lower = norm.ppf(alpha / num_side)  # norm.ppf(0.05)
 upper = norm.ppf(1 - alpha / num_side)  # norm.ppf(0.95)
 
-print('alpha: {}'.format(alpha))
+print("alpha: {}".format(alpha))
 print(
     "p_val|z_score\n{}|{:+.3f}\n{}|{:+.3f}".format(
         alpha / num_side, lower, 1 - alpha / num_side, upper
@@ -272,7 +272,7 @@ alpha = 0.01
 lower = norm.ppf(alpha / num_side)  # norm.ppf(0.05)
 upper = norm.ppf(1 - alpha / num_side)  # norm.ppf(0.95)
 
-print('alpha: {}'.format(alpha))
+print("alpha: {}".format(alpha))
 print(
     "p_val|z_score\n{}|{:+.3f}\n{}|{:+.3f}".format(
         alpha / num_side, lower, 1 - alpha / num_side, upper
@@ -299,7 +299,7 @@ norm.cdf(lower), norm.cdf(upper)
 
 
 
-    (0.049999999999999975, 0.95)
+    (0.01, 0.99)
 
 
 
@@ -311,7 +311,7 @@ norm.sf(abs(lower)), norm.sf(abs(upper))
 
 
 
-    (0.049999999999999975, 0.05000000000000007)
+    (0.01, 0.01)
 
 
 
@@ -499,30 +499,6 @@ I couldn't find the equivalent when using statsmodel
 
 
 ```python
-from math import ceil
-
-init_prop = 0.02
-mde_prop = 0.02 * 1.15
-effect_size = sm.proportion_effectsize(init_prop, mde_prop)
-print(
-    f"For a change from {init_prop:.2f} to {mde_prop:.2f} - the effect size is {effect_size:.4f}."
-)
-
-
-sample_size = sm.zt_ind_solve_power(
-    effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="two-sided"
-)
-print(
-    f"{ceil(sample_size)} sample size required given power analysis and input parameters."
-)
-```
-
-    For a change from 0.02 to 0.02 - the effect size is -0.0207.
-    36650 sample size required given power analysis and input parameters.
-
-
-
-```python
 def calculate_effect_size(baseline_rate, expected_rate):
     # Calculate standard deviations for both rate based on Bernoulli distribution.
     # https://math.stackexchange.com/questions/1716156/sd-of-a-bernoulli-trial
@@ -538,32 +514,176 @@ def calculate_effect_size(baseline_rate, expected_rate):
 
 
 effect_size = calculate_effect_size(0.02, 0.02 * 1.15)
-sample_size = sm.zt_ind_solve_power(
-    effect_size=effect_size, nobs1=None, alpha=0.05, power=0.8, alternative="two-sided"
-)
-print(
-    f"{ceil(sample_size)} sample size required given power analysis and input parameters."
-)
+effect_size
 ```
 
-    36690 sample size required given power analysis and input parameters.
+
+
+
+    0.020684490843174575
+
 
 
 
 ```python
-es = sm.proportion_effectsize(0.02, 0.023)
-m = sm.tt_ind_solve_power(
-    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
-)
-n = sm.tt_ind_solve_power(
-    effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
-)
-m, n
+import pandas as pd
+
+es = sm.proportion_effectsize(0.02, 0.02 * 1.15)
+
+df = pd.DataFrame(columns=["Name", "Sides", "Effect Size", "Sample Size"])
+df.loc[len(df)] = [
+    "t-test",
+    "two-sided",
+    es,
+    sm.tt_ind_solve_power(
+        effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+    ),
+]
+df.loc[len(df)] = [
+    "t-test",
+    "smaller",
+    es,
+    sm.tt_ind_solve_power(
+        effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
+    ),
+]
+df.loc[len(df)] = [
+    "z-test",
+    "two-sided",
+    es,
+    sm.zt_ind_solve_power(
+        effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+    ),
+]
+df.loc[len(df)] = [
+    "z-test",
+    "smaller",
+    es,
+    sm.zt_ind_solve_power(
+        effect_size=es, ratio=1, power=0.8, alpha=0.05, alternative="smaller"
+    ),
+]
+df.loc[len(df)] = [
+    "t-test",
+    "two-sided",
+    effect_size,
+    sm.tt_ind_solve_power(
+        effect_size=effect_size, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+    ),
+]
+df.loc[len(df)] = [
+    "t-test",
+    "smaller",
+    effect_size,
+    sm.tt_ind_solve_power(
+        effect_size=effect_size, ratio=1, power=0.8, alpha=0.05, alternative="larger"
+    ),
+]
+df.loc[len(df)] = [
+    "z-test",
+    "two-sided",
+    effect_size,
+    sm.zt_ind_solve_power(
+        effect_size=effect_size, ratio=1, power=0.8, alpha=0.05, alternative="two-sided"
+    ),
+]
+df.loc[len(df)] = [
+    "z-test",
+    "smaller",
+    effect_size,
+    sm.zt_ind_solve_power(
+        effect_size=effect_size, ratio=1, power=0.8, alpha=0.05, alternative="larger"
+    ),
+]
+df
 ```
 
 
 
 
-    (36650.74612637405, 28869.758338145828)
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Sides</th>
+      <th>Effect Size</th>
+      <th>Sample Size</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>t-test</td>
+      <td>two-sided</td>
+      <td>-0.020696</td>
+      <td>36650.745588</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>t-test</td>
+      <td>smaller</td>
+      <td>-0.020696</td>
+      <td>28869.758010</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>z-test</td>
+      <td>two-sided</td>
+      <td>-0.020696</td>
+      <td>36649.785199</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>z-test</td>
+      <td>smaller</td>
+      <td>-0.020696</td>
+      <td>28869.081601</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>t-test</td>
+      <td>two-sided</td>
+      <td>0.020684</td>
+      <td>36690.894889</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>t-test</td>
+      <td>smaller</td>
+      <td>0.020684</td>
+      <td>28901.383665</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>z-test</td>
+      <td>two-sided</td>
+      <td>0.020684</td>
+      <td>36689.934500</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>z-test</td>
+      <td>smaller</td>
+      <td>0.020684</td>
+      <td>28900.707255</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 
