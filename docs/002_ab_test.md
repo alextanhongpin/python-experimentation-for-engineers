@@ -128,3 +128,60 @@ one_tail, two_tail
     (305, 388)
 
 
+
+
+```python
+n = 32
+a = np.random.normal(1, sigma, n)
+b = np.random.normal(1 + delta, sigma, n)
+sm.ztest(a, b)
+```
+
+
+
+
+    (-1.2011498999324322, 0.2296930594566906)
+
+
+
+
+```python
+sm.ttest_ind(a, b)
+```
+
+
+
+
+    (-1.2011498999324322, 0.23426165878620456, 62.0)
+
+
+
+
+```python
+nobs1 = 388
+nobs2 = 388
+sm.test_proportions_2indep(
+    p1 * nobs1, nobs1, p2 * nobs2, nobs2, return_results=False  # count1,
+)
+```
+
+
+
+
+    (2.806441871268021, 0.0050091949361540785)
+
+
+
+
+```python
+count = [p1 * nobs1, p2 * nobs2]
+nobs = [nobs1, nobs2]
+sm.proportions_ztest(count, nobs, alternative="two-sided", prop_var=False)
+```
+
+
+
+
+    (2.799711384836629, 0.005114831546164752)
+
+
