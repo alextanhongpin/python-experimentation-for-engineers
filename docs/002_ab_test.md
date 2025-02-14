@@ -132,15 +132,28 @@ one_tail, two_tail
 
 ```python
 n = 32
-a = np.random.normal(1, sigma, n)
-b = np.random.normal(1 + delta, sigma, n)
+np.random.seed(4)
+a = np.random.normal(0, sigma, n)
+b = np.random.normal(delta, sigma, n)
 sm.ztest(a, b)
 ```
 
 
 
 
-    (-1.2011498999324322, 0.2296930594566906)
+    (-2.0747507095620703, 0.03800964495628399)
+
+
+
+
+```python
+np.mean(a), np.std(a), np.mean(b), np.std(b)
+```
+
+
+
+
+    (0.2994744890564782, 9.506761445214066, 5.518622508533227, 10.285421704271933)
 
 
 
@@ -152,7 +165,7 @@ sm.ttest_ind(a, b)
 
 
 
-    (-1.2011498999324322, 0.23426165878620456, 62.0)
+    (-2.0747507095620703, 0.04216680773099718, 62.0)
 
 
 
