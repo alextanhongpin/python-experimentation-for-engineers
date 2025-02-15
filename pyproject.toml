@@ -21,6 +21,7 @@ scikit-learn = "^1.5.1"
 tqdm = "^4.67.1"
 scikit-optimize = "^0.10.2"
 optuna = "^4.2.0"
+plotly = "^6.0.0"
 
 
 [build-system]
