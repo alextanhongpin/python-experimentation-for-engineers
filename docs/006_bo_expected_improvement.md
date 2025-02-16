@@ -7,6 +7,8 @@
 
 
 ```python
+import functools
+
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,17 +24,25 @@ def simple_function(x):
 
 
 # Define the acquisition function (Expected Improvement)
-def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01):
+def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01, objective="min"):
     """EI that find the minimum"""
+    assert objective in ["min", "max"]
+
     mu, sigma = gpr.predict(X, return_std=True)
     mu_sample = gpr.predict(X_sample)
-    mu_sample_opt = np.min(mu_sample)
+    if objective == "min":
+        mu_sample_opt = np.min(mu_sample)
+    else:
+        mu_sample_opt = np.max(mu_sample)
 
     with np.errstate(divide="warn"):
-        imp = mu_sample_opt - mu - xi
+        if objective == "min":
+            imp = mu_sample_opt - mu - xi
+        else:
+            imp = mu - mu_sample_opt - xi
         Z = imp / sigma
         ei = imp * norm.cdf(Z) + sigma * norm.pdf(Z)
-        ei[sigma == 0.0] = 0.0
+        ei[sigma <= 0.0] = 0.0
 
     return ei
 
@@ -56,16 +66,17 @@ def propose_location(acquisition, X_sample, Y_sample, gpr, bounds, n_restarts=25
 
 
 # Bayesian Optimization loop
-def bayesian_optimization(n_iters, sample_loss, bounds, n_pre_samples=5):
+def bayesian_optimization(n_iters, sample_loss, bounds, n_pre_samples=2):
     X_sample = np.random.uniform(
         bounds[:, 0], bounds[:, 1], size=(n_pre_samples, bounds.shape[0])
     )
     Y_sample = sample_loss(X_sample)
 
     kernel = ConstantKernel(1.0) * Matern(nu=2.5)
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=1e-6)
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=1e-3)
 
-    plt.figure(figsize=(12, n_iters * 3))
+    plt.figure(figsize=(12, n_iters * 4))
+    plt.suptitle("Bayesian Optimization with Expected Improvement on Simple Function")
     plt.subplots_adjust(hspace=0.4)
 
     for i in range(n_iters):
@@ -101,14 +112,13 @@ def plot_acquisition_function(
     plt.fill_between(
         X.ravel(), mu - 1.96 * sigma, mu + 1.96 * sigma, alpha=0.2, label="GP 95% CI"
     )
+    plt.axvline(x=X_next, ls="--", c="k", lw=1, label="Next sampling location")
+    plt.legend()
 
     plt.subplot(n_iters, 2, 2 * i + 2)
     plt.plot(X, acquisition, "g--", label="Acquisition Function (EI)")
     plt.axvline(x=X_next, ls="--", c="k", lw=1, label="Next sampling location")
-
-    if i == 0:
-        plt.legend()
-        plt.title("Bayesian Optimization with Expected Improvement on Simple Function")
+    plt.legend()
 
 
 # Plot the results
@@ -142,118 +152,10 @@ print(
 )
 ```
 
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
+
     
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
+![png](006_bo_expected_improvement_files/006_bo_expected_improvement_1_0.png)
     
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/_gpr.py:660: ConvergenceWarning: lbfgs failed to converge (status=2):
-    ABNORMAL: .
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      _check_optimize_result("lbfgs", opt_res)
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
-    /Users/alextanhongpin/Library/Caches/pypoetry/virtualenvs/python-experimentation-for-engineers-8u4RfFJH-py3.12/lib/python3.12/site-packages/sklearn/gaussian_process/kernels.py:452: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__constant_value is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
-      warnings.warn(
 
 
 
@@ -262,49 +164,11 @@ print(
     
 
 
-
-    
-![png](006_bo_expected_improvement_files/006_bo_expected_improvement_1_2.png)
-    
-
-
-    Best value found: y = 2.228676999901858e-06 at x = 2.001492875413389
+    Best value found: y = 1.3662563994274134e-05 at x = 1.9963037094277811
 
 
 
 ```python
-# Plot the acquisition function
-def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01):
-    """
-    Computes the EI at points X based on existing samples X_sample
-    and Y_sample using a Gaussian process surrogate model.
-
-    Args:
-        X: Points at which EI shall be computed (m x d).
-        X_sample: Sample locations (n x d).
-        Y_sample: Sample values (n x 1).
-        gpr: A GaussianProcessRegressor fitted to samples.
-        xi: Exploitation-exploration trade-off parameter.
-
-    Returns:
-        Expected improvements at points X.
-    """
-    mu, sigma = gpr.predict(X, return_std=True)
-    mu_sample = gpr.predict(X_sample)
-    # Needed for noise-based model,
-    # otherwise use np.max(Y_sample).
-    # See also section 2.4 in [1]
-    mu_sample_opt = np.max(mu_sample)
-
-    with np.errstate(divide="warn"):
-        imp = mu - mu_sample_opt - xi
-        Z = imp / sigma
-        ei = imp * norm.cdf(Z) + sigma * norm.pdf(Z)
-        ei[sigma <= 0.0] = 0.0
-
-    return ei
-
-
 bounds = np.array([[-1.0, 2.0]])
 noise = 0.2
 
@@ -319,7 +183,7 @@ def record_acquisition_function(
     X = np.arange(*bounds[0], 0.01).reshape(-1, 1)
     Y = sample_loss(X, 0)
     mu, sigma = gpr.predict(X, return_std=True)
-    acquisition = expected_improvement(X, X_sample, Y_sample, gpr, xi)
+    acquisition = expected_improvement(X, X_sample, Y_sample, gpr, xi, objective="max")
 
     axs[0].plot(X, Y, "y-", label="Simple Function")
     axs[0].plot(X_sample, Y_sample, "ro", label="Samples")
@@ -335,7 +199,7 @@ def record_acquisition_function(
 
 
 # Bayesian Optimization loop
-def simulate_bayesian_optimization(n_iters, sample_loss, bounds, n_pre_samples=5):
+def simulate_bayesian_optimization(n_iters, sample_loss, bounds, n_pre_samples=2):
     global X_sample
     global Y_sample
     X_sample = np.array([[-0.9], [1.1]])
@@ -358,7 +222,13 @@ def simulate_bayesian_optimization(n_iters, sample_loss, bounds, n_pre_samples=5
         [ax.cla() for ax in axs]
         gpr.fit(X_sample, Y_sample)
 
-        X_next = propose_location(expected_improvement, X_sample, Y_sample, gpr, bounds)
+        X_next = propose_location(
+            functools.partial(expected_improvement, objective="max"),
+            X_sample,
+            Y_sample,
+            gpr,
+            bounds,
+        )
         Y_next = sample_loss(X_next)
 
         X_sample = np.vstack((X_sample, X_next))
