@@ -134,7 +134,7 @@ one_tail, two_tail
 sm.power_proportions_2indep(
     p1 - p2,
     p2,
-    nobs1=1455,
+    nobs1=388,
     ratio=1,
     alpha=0.05,
     alternative="two-sided",
@@ -146,12 +146,12 @@ sm.power_proportions_2indep(
 
 
     <class 'statsmodels.tools.testing.Holder'>
-    power = 0.9997486095693934
-    p_pooled = 0.45
-    std_null = 0.7035623639735145
-    std_alt = 0.7
-    nobs1 = 1455
-    nobs2 = 1455
+    power = 0.7809360655972347
+    p_pooled = 0.13333333333333333
+    std_null = 0.48074017006186526
+    std_alt = 0.47842333648024415
+    nobs1 = 388
+    nobs2 = 388
     nobs_ratio = 1
     alpha = 0.05
 
@@ -169,7 +169,7 @@ sm.ztest(a, b)
 
 
 
-    (-2.026170300843182, 0.04274733595219376)
+    (-0.019795765823731406, 0.9842062956060404)
 
 
 
@@ -181,7 +181,10 @@ np.mean(a), np.std(a), np.mean(b), np.std(b)
 
 
 
-    (0.30494685217315737, 9.361662707497304, 5.286954602816181, 10.28718941558651)
+    (0.30494685217315737,
+     9.361662707497304,
+     0.35362126948284883,
+     10.287189415586512)
 
 
 
@@ -193,7 +196,7 @@ sm.ttest_ind(a, b)
 
 
 
-    (-2.026170300843183, 0.046919745963708216, 64.0)
+    (-0.019795765823731385, 0.9842678829762332, 64.0)
 
 
 
@@ -205,7 +208,7 @@ st.ttest_ind(a, b)
 
 
 
-    TtestResult(statistic=-2.026170300843182, pvalue=0.04691974596370832, df=64.0)
+    TtestResult(statistic=-0.019795765823731406, pvalue=0.9842678829762332, df=64.0)
 
 
 
@@ -224,7 +227,7 @@ st.ttest_ind_from_stats(
 
 
 
-    Ttest_indResult(statistic=-2.026170300843182, pvalue=0.04691974596370832)
+    Ttest_indResult(statistic=-0.019795765823731406, pvalue=0.9842678829762332)
 
 
 
@@ -241,7 +244,7 @@ st.ttest_ind_from_stats(
 
 count1 = 50
 nobs1 = 500
-count2 = 100
+count2 = 90
 nobs2 = 600
 p1 = count1 / nobs1
 p2 = count2 / nobs2
@@ -259,17 +262,17 @@ sm.test_proportions_2indep(
 
 
     <class 'statsmodels.stats.base.HolderTuple'>
-    statistic = -3.2535580685929917
-    pvalue = 0.0011396942939908236
+    statistic = -2.494217538993216
+    pvalue = 0.012623515252023227
     compare = 'diff'
     method = 'agresti-caffo'
-    diff = -0.06666666666666665
-    ratio = 0.6000000000000001
-    odds_ratio = 0.5555555555555557
-    variance = 0.00041375423296553056
+    diff = -0.04999999999999999
+    ratio = 0.6666666666666667
+    odds_ratio = 0.6296296296296297
+    variance = 0.00039496130786195586
     alternative = 'two-sided'
     value = 0
-    tuple = (-3.2535580685929917, 0.0011396942939908236)
+    tuple = (-2.494217538993216, 0.012623515252023227)
 
 
 
@@ -289,7 +292,7 @@ sap.score_test_proportions_2indep(
 
 
 
-    (-3.206718094200441, 0.001342584922266084)
+    (-2.476451594519868, 0.01326956172775838)
 
 
 
@@ -303,7 +306,7 @@ sm.proportions_ztest(count, nobs, alternative="two-sided", prop_var=False)
 
 
 
-    (-3.2081766879052513, 0.0013357940586552824)
+    (-2.4775780224127866, 0.013227748427113117)
 
 
 
@@ -330,14 +333,14 @@ st.ttest_ind_from_stats(
 )
 ```
 
-    0.13636363636363635
-    0.02078023536484084
+    0.12727272727272726
+    0.02018099916438052
 
 
 
 
 
-    Ttest_indResult(statistic=-3.286499674123032, pvalue=0.0010465503504400564)
+    Ttest_indResult(statistic=-2.5237723256253433, pvalue=0.011750495881847919)
 
 
 
@@ -354,7 +357,7 @@ z_score, p_value
 
 
 
-    (-3.286499674123032, 0.000507204456283015)
+    (-2.5237723256253433, 0.005805154770786605)
 
 
 
@@ -366,7 +369,7 @@ sm.proportion_effectsize(p2, p1)
 
 
 
-    0.19756756177464585
+    0.15189772139085922
 
 
 
@@ -399,10 +402,10 @@ sm.power_proportions_2indep(
 
 
     <class 'statsmodels.tools.testing.Holder'>
-    power = 0.8994962353514785
-    p_pooled = 0.13636363636363635
-    std_null = 0.4646601886422926
-    std_alt = 0.4535865305988933
+    power = 0.7009982730689444
+    p_pooled = 0.1272727272727273
+    std_null = 0.451260859854213
+    std_alt = 0.4430011286667338
     nobs1 = 500
     nobs2 = 600.0
     nobs_ratio = 1.2
@@ -418,7 +421,7 @@ p1 - p2, p2 + (p1 - p2) == p1
 
 
 
-    (-0.06666666666666665, True)
+    (-0.04999999999999999, True)
 
 
 
@@ -437,7 +440,7 @@ sm.zt_ind_solve_power(
 
 
 
-    0.9036712061263761
+    0.7083448374710821
 
 
 
@@ -455,7 +458,7 @@ sm.tt_ind_solve_power(
 
 
 
-    0.9031827828884099
+    0.7075911983838853
 
 
 
