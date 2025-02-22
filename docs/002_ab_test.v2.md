@@ -14,14 +14,16 @@ alpha = 0.05
 ratio = 1
 
 p1 = 0.02
-p2 = p1 * 1.15
+p2 = p1 * 0.15 + p1
+p1 = 0.01
+p2 = p1 * 0.14 + p1
 p1, p2
 ```
 
 
 
 
-    (0.02, 0.023)
+    (0.01, 0.0114)
 
 
 
@@ -38,7 +40,7 @@ nobs1
 
 
 
-    36693
+    84779
 
 
 
@@ -53,7 +55,7 @@ count1, count2, count1 / nobs1, count2 / nobs2
 
 
 
-    (734, 844, 0.02000381544163737, 0.02300166244242771)
+    (848, 967, 0.010002477028509418, 0.011406126517179963)
 
 
 
@@ -72,17 +74,17 @@ sm.test_proportions_2indep(
 
 
     <class 'statsmodels.stats.base.HolderTuple'>
-    statistic = -2.7977781958042582
-    pvalue = 0.005145543433134009
+    statistic = -2.8068490684958927
+    pvalue = 0.005002867614953665
     compare = 'diff'
     method = 'agresti-caffo'
-    diff = -0.0029978470007903414
-    ratio = 0.8696682464454977
-    odds_ratio = 0.8670078969611125
-    variance = 1.1480082889411636e-06
+    diff = -0.0014036494886705449
+    ratio = 0.8769389865563597
+    odds_ratio = 0.8756956350009129
+    variance = 2.500683525084858e-07
     alternative = 'two-sided'
     value = 0
-    tuple = (-2.7977781958042582, 0.005145543433134009)
+    tuple = (-2.8068490684958927, 0.005002867614953665)
 
 
 
@@ -97,7 +99,7 @@ sm.proportions_ztest(
 
 
 
-    (-2.7993640341603294, 0.0051203375431128784)
+    (-2.808313491609461, 0.004980172048271678)
 
 
 
@@ -118,13 +120,42 @@ sm.power_proportions_2indep(
 
 
     <class 'statsmodels.tools.testing.Holder'>
-    power = 0.8000034194420894
-    p_pooled = 0.0215
-    std_null = 0.20512313375141283
-    std_alt = 0.2051121644369246
-    nobs1 = 36693
-    nobs2 = 36693.0
+    power = 0.800001811889412
+    p_pooled = 0.010700000000000001
+    std_null = 0.14550264602405003
+    std_alt = 0.14549927834872584
+    nobs1 = 84779
+    nobs2 = 84779.0
     nobs_ratio = 1.0
     alpha = 0.05
+
+
+
+
+```python
+def evan_miller_sample_size(p, delta, alpha=0.05, power=0.8):
+    if p > 0.5:
+        p = 1.0 - p
+    z_alpha = st.norm.ppf(1 - alpha / 2)
+    z_beta = st.norm.ppf(power)
+
+    sd1 = np.sqrt(2 * p * (1 - p))
+    sd2 = np.sqrt(p * (1 - p) + (p + delta) * (1 - p - delta))
+    return math.ceil(
+        (
+            (z_alpha * sd1 + z_beta * sd2)
+            * (z_alpha * sd1 + z_beta * sd2)
+            / (delta * delta)
+        )
+    )
+
+
+evan_miller_sample_size(p1, p2 - p1)
+```
+
+
+
+
+    80919
 
 
