@@ -356,3 +356,29 @@ sm.test_proportions_2indep(
     tuple = (-2.87061379221714, 0.0040967571509745926)
 
 
+
+## Difference between method `wald` and `agresti-caffo`:
+
+https://www.itl.nist.gov/div898/software/dataplot/refman1/auxillar/diffprop.htm
+
+
+For `wald` (aka _normal approximation_):
+
+$$
+(\hat{p}_1 - \hat{p}_2) \pm z_{\alpha/2}
+                 \sqrt{\frac{\hat{p}_1 (1 - \hat{p}_1)}{n_1} +
+                 \frac{\hat{p}_2 (1 - \hat{p}_2)}{n_2}}
+$$
+
+For `agresti-caffo` (aka _adjusted wald_):
+
+$$
+(\tilde{p}_1 - \tilde{p}_2) \pm z_{\alpha/2}
+                 \sqrt{\frac{\tilde{p}_1 (1 - \tilde{p}_1)}{n_1+2} +
+                 \frac{\tilde{p}_2 (1 - \tilde{p}_2)}{n_2+2}}
+$$
+
+`wald` method is commonly used. However, Agresti and Caffo pointed out that this method does not always perform well in the sense that the actual coverage probabilities can be less than (and often substantially less than) the nominal coverage probabilities.
+
+
+
